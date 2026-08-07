@@ -1,0 +1,36 @@
+diff --git a/src/extension/native_offload/native_offload.c b/src/extension/native_offload/native_offload.c
+--- a/src/extension/native_offload/native_offload.c
++++ b/src/extension/native_offload/native_offload.c
+@@ -393,7 +393,11 @@ static void handle_execve_enter(Tracee *tracee, NativeOffloadConfig *cfg,
+ 	if (read_string(tracee, path, src, sizeof(path)) < 0) return;
+ 
+ 	const char *name = basename_of(path);
+-	if (native_offload_lookup(name) == NULL) return;
++	const HandlerEntry *entry = native_offload_lookup(name);
++	NOFF_DBG("execve pid=%d path='%s' offload=%s arch=aarch64 "
++		 "elf_interpreter=handled-by-proot fallback=plain-proot",
++		 tracee->pid, path, entry != NULL ? "yes" : "no");
++	if (entry == NULL) return;
+ 
+ 	NOFF_DBG("execve intercepted pid=%d path='%s' name='%s'",
+ 		 tracee->pid, path, name);
+@@ -428,6 +432,7 @@ static void handle_execve_enter(Tracee *tracee, NativeOffloadConfig *cfg,
+ 				tracee->fs->cwd, &rsp);
+ 	if (status < 0) {
+-		NOFF_DBG("do_offload failed name='%s' status=%d (%s)",
++		NOFF_DBG("do_offload failed name='%s' status=%d (%s) "
++			 "fallback=plain-proot result=continuing-original-execve",
+ 			 name, status, strerror(-status));
+ 		note(tracee, WARNING, INTERNAL,
+ 		     "native_offload: offload of '%s' failed: %d", name, status);
+@@ -443,7 +448,9 @@ static void handle_execve_enter(Tracee *tracee, NativeOffloadConfig *cfg,
+ 
+ 	status = rewrite_as_cat(tracee, filename_reg, argv_reg, rsp.tmpfile);
+ 	if (status < 0) {
+-		NOFF_DBG("rewrite_as_cat failed: %d (%s)", status, strerror(-status));
++		NOFF_DBG("rewrite_as_cat failed: %d (%s) "
++			 "fallback=plain-proot result=continuing-original-execve",
++			 status, strerror(-status));
+ 		note(tracee, WARNING, INTERNAL,
+ 		     "native_offload: rewrite_as_cat failed: %d", status);
+ 	} else {

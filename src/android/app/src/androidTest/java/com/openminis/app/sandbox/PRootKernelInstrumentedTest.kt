@@ -25,12 +25,14 @@ class PRootKernelInstrumentedTest {
     @Before
     fun setUp() {
         context = InstrumentationRegistry.getInstrumentation().targetContext
+        PRootKernel.setNativeOffloadEnabled(context, false)
         // Reset PRootKernel state
         resetKernel()
     }
 
     @After
     fun tearDown() {
+        PRootKernel.setNativeOffloadEnabled(context, false)
         PRootKernel.clearBindMounts()
         PRootKernel.customEnvironment.clear()
         resetKernel()
@@ -169,6 +171,40 @@ class PRootKernelInstrumentedTest {
 
         assertTrue(cmd.contains("/host/a:/mnt/a"))
         assertTrue(cmd.contains("/host/b:/mnt/b"))
+    }
+
+    @Test
+    fun nativeOffloadIsDisabledByDefault() = runBlocking {
+        if (!canBoot()) return@runBlocking
+        PRootKernel.boot(context)
+
+        val cmd = PRootKernel.buildProotCommand("/bin/true")
+
+        assertFalse(cmd.any { it.startsWith("--native-offload=") })
+    }
+
+    @Test
+    fun nativeOffloadCanBeEnabledForAbComparison() = runBlocking {
+        if (!canBoot()) return@runBlocking
+        PRootKernel.boot(context)
+        try {
+            PRootKernel.setNativeOffloadEnabled(context, true)
+
+            val cmd = PRootKernel.buildProotCommand("/bin/true")
+
+            assertTrue(cmd.any { it.startsWith("--native-offload=") })
+        } finally {
+            PRootKernel.setNativeOffloadEnabled(context, false)
+        }
+    }
+
+    @Test
+    fun identifiesNativeCrashExitCodes() {
+        assertTrue(PRootKernel.isNativeCrashExitCode(135))
+        assertTrue(PRootKernel.isNativeCrashExitCode(139))
+        assertFalse(PRootKernel.isNativeCrashExitCode(0))
+        assertEquals("SIGBUS", PRootKernel.signalName(135))
+        assertEquals("SIGSEGV", PRootKernel.signalName(139))
     }
 
     @Test(expected = IllegalStateException::class)

@@ -38,6 +38,9 @@ class PersistentShell(
     @Volatile
     private var stdinWriter: BufferedWriter? = null
 
+    @Volatile
+    private var processUsesNativeOffload: Boolean = false
+
     private val isStarting = AtomicBoolean(false)
 
     /** Pending command callback — only one command at a time. */
@@ -103,13 +106,20 @@ class PersistentShell(
         }
 
         val handlers = NativeOffloadServer.registeredHandlers
-        if (handlers.isNotEmpty()) {
+        val useNativeOffload = PRootKernel.nativeOffloadEnabled && handlers.isNotEmpty()
+        processUsesNativeOffload = useNativeOffload
+        if (useNativeOffload) {
             cmd.add("--native-offload=${NativeOffloadServer.socketName}:${handlers.joinToString(",")}")
         }
 
         cmd.add("/bin/sh")
 
-        val debugOffload = com.openminis.app.BuildConfig.DEBUG
+        val debugOffload = com.openminis.app.BuildConfig.DEBUG && useNativeOffload
+        PRootKernel.logExecutionDiagnostics(
+            executable = rootfsManager.prootBinary.absolutePath,
+            guestExecutable = "/bin/sh",
+            offload = useNativeOffload,
+        )
 
         val processBuilder = ProcessBuilder(cmd)
         // In debug builds we want proot's native_offload stderr logs in
@@ -222,16 +232,30 @@ class PersistentShell(
             Log.d(TAG, "Reader loop ended: ${e.message}")
         }
 
-        // Process exited
+        // Process exited. java.lang.Process reports signal deaths as 128 + signal
+        // on Android/Linux (SIGBUS=135, SIGSEGV=139).
+        val processExitCode = runCatching { p.waitFor() }.getOrDefault(-1)
+        val crashedWithNativeOffload = processUsesNativeOffload &&
+            PRootKernel.isNativeCrashExitCode(processExitCode)
+        Log.i(
+            TAG,
+            "Persistent shell process exited code=$processExitCode " +
+                "signal=${PRootKernel.signalName(processExitCode)} offload=$processUsesNativeOffload " +
+                "fallback=${if (crashedWithNativeOffload) "pending" else "not-needed"}",
+        )
         val cb = pendingCallback
         if (cb != null) {
-            cb.onComplete?.invoke(cb.output.toString(), -1)
+            cb.onComplete?.invoke(cb.output.toString(), processExitCode)
             pendingCallback = null
+        }
+
+        if (crashedWithNativeOffload) {
+            PRootKernel.disableNativeOffloadAfterCrash(context, processExitCode, TAG)
         }
 
         process = null
         stdinWriter = null
-        Log.i(TAG, "Persistent shell process exited")
+        processUsesNativeOffload = false
     }
 
     private fun feedLines(text: String, callback: (String) -> Unit) {
@@ -266,6 +290,30 @@ class PersistentShell(
         command: String,
         timeout: Long = 600_000L,
         lineCallback: ((String) -> Unit)? = null,
+    ): Pair<String, Int> {
+        ensureStarted()
+        val attemptedWithNativeOffload = processUsesNativeOffload
+        val first = executeCommandOnce(command, timeout, lineCallback)
+        if (!attemptedWithNativeOffload || !PRootKernel.isNativeCrashExitCode(first.second)) {
+            return first
+        }
+
+        PRootKernel.disableNativeOffloadAfterCrash(context, first.second, "$TAG.executeCommand")
+        stop()
+        ensureStarted()
+        val fallback = executeCommandOnce(command, timeout, lineCallback)
+        Log.w(
+            TAG,
+            "native_offload fallback result command=${command.take(120)} " +
+                "firstExit=${first.second} fallbackExit=${fallback.second}",
+        )
+        return fallback
+    }
+
+    private suspend fun executeCommandOnce(
+        command: String,
+        timeout: Long,
+        lineCallback: ((String) -> Unit)?,
     ): Pair<String, Int> {
         ensureStarted()
 

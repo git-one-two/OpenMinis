@@ -845,6 +845,9 @@
     <string name="rootfs_browse_section">Browse</string>
     <string name="rootfs_browse_files_label">Browse Files</string>
     <string name="rootfs_mirrors_section">Mirrors</string>
+    <string name="rootfs_compatibility_section">Compatibility</string>
+    <string name="rootfs_native_offload_label">Native offload (experimental)</string>
+    <string name="rootfs_native_offload_description">Disabled by default. Enable only for A/B testing; new shells use the selected mode.</string>
     <string name="rootfs_actions_section">Actions</string>
     <string name="rootfs_install_label">Install Rootfs</string>
     <string name="rootfs_reset_label">Reset Rootfs</string>

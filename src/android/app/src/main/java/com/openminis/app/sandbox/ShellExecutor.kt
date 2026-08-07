@@ -45,12 +45,39 @@ object ShellExecutor {
         timeout: Long = DEFAULT_TIMEOUT_MS,
         environment: Map<String, String> = emptyMap(),
         lineCallback: ((String) -> Unit)? = null
+    ): ShellResult {
+        val attemptedWithNativeOffload = PRootKernel.nativeOffloadEnabled &&
+            NativeOffloadServer.registeredHandlers.isNotEmpty()
+        val first = executeOnce(
+            context, command, timeout, environment, lineCallback, attemptedWithNativeOffload,
+        )
+        if (!attemptedWithNativeOffload || !PRootKernel.isNativeCrashExitCode(first.exitCode)) {
+            return first
+        }
+
+        PRootKernel.disableNativeOffloadAfterCrash(context, first.exitCode, TAG)
+        val fallback = executeOnce(context, command, timeout, environment, lineCallback, false)
+        Log.w(
+            TAG,
+            "native_offload fallback result command=${command.take(120)} " +
+                "firstExit=${first.exitCode} fallbackExit=${fallback.exitCode}",
+        )
+        return fallback
+    }
+
+    private suspend fun executeOnce(
+        context: Context,
+        command: String,
+        timeout: Long,
+        environment: Map<String, String>,
+        lineCallback: ((String) -> Unit)?,
+        nativeOffload: Boolean,
     ): ShellResult = withContext(Dispatchers.IO) {
         check(PRootKernel.isBooted) { "PRootKernel must be booted before executing commands" }
 
-        val prootCommand = PRootKernel.buildProotCommand(command)
+        val prootCommand = PRootKernel.buildProotCommand(command, nativeOffload)
 
-        Log.d(TAG, "Executing: $command")
+        Log.d(TAG, "Executing offload=$nativeOffload: $command")
 
         val startTime = System.currentTimeMillis()
 
@@ -135,7 +162,11 @@ object ShellExecutor {
         }
 
         val durationMs = System.currentTimeMillis() - startTime
-        Log.d(TAG, "Command completed in ${durationMs}ms with exit code $exitCode")
+        Log.d(
+            TAG,
+            "Command completed in ${durationMs}ms with exit=$exitCode " +
+                "signal=${PRootKernel.signalName(exitCode)} offload=$nativeOffload",
+        )
 
         ShellResult(
             output = output.toString().trimEnd(),

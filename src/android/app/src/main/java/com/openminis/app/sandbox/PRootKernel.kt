@@ -23,6 +23,11 @@ import kotlin.math.abs
 object PRootKernel {
 
     private const val TAG = "PRootKernel"
+    private const val PREFS_NAME = "sandbox_runtime"
+    private const val KEY_NATIVE_OFFLOAD_ENABLED = "native_offload_enabled"
+
+    const val SIGBUS_EXIT_CODE = 128 + 7
+    const val SIGSEGV_EXIT_CODE = 128 + 11
 
     var isBooted: Boolean = false
         private set
@@ -41,6 +46,10 @@ object PRootKernel {
 
     private lateinit var rootfsManager: RootfsManager
 
+    @Volatile
+    var nativeOffloadEnabled: Boolean = false
+        private set
+
     /** Custom environment variables injected into every proot command. */
     val customEnvironment: MutableMap<String, String> = mutableMapOf()
 
@@ -57,6 +66,7 @@ object PRootKernel {
         }
 
         rootfsManager = RootfsManager.getInstance(context)
+        nativeOffloadEnabled = isNativeOffloadPreferenceEnabled(context)
         rootfsManager.installIfNeeded()
         rootfsManager.installProotIfNeeded()
 
@@ -151,16 +161,23 @@ object PRootKernel {
         // can resolve /var/minis/{memory,skills,shared}/... (idempotent).
         registerGlobalBindMounts(context)
 
-        // Start the native_offload server so the proot extension can reach it
-        // over the abstract unix socket. Handlers must have been registered
-        // via NativeOffloadServer.register() before this point.
-        NativeOffloadServer.start(rootfsManager.rootfsDir)
-
-        // Materialize stub binaries inside the rootfs for each handler so
-        // /bin/sh's PATH search succeeds and triggers an execve the extension
-        // can intercept. The stub's content is irrelevant — proot rewrites
-        // the execve before it runs.
-        installHandlerStubs(rootfsManager.rootfsDir)
+        if (nativeOffloadEnabled) {
+            // Start the host endpoint only when the experiment is explicitly
+            // enabled. Keeping both the socket and CLI extension absent is the
+            // clean A/B baseline for PRoot compatibility investigations.
+            try {
+                NativeOffloadServer.start(rootfsManager.rootfsDir)
+                installHandlerStubs(rootfsManager.rootfsDir)
+            } catch (e: Exception) {
+                Log.e(TAG, "native_offload initialization failed; falling back to standard PRoot", e)
+                nativeOffloadEnabled = false
+                persistNativeOffloadPreference(context, false)
+                NativeOffloadServer.stop()
+            }
+        } else {
+            NativeOffloadServer.stop()
+            Log.i(TAG, "native_offload disabled; using standard PRoot exec path")
+        }
 
         // T219-6: now that rootfs is on disk, materialize /var/minis/mounts/<name>
         // placeholder dirs that PRoot's `-b` needs as bind targets. The earlier
@@ -583,7 +600,10 @@ object PRootKernel {
      *         /bin/sh -c "<command>"
      * ```
      */
-    fun buildProotCommand(shellCommand: String): List<String> {
+    fun buildProotCommand(
+        shellCommand: String,
+        nativeOffload: Boolean = nativeOffloadEnabled,
+    ): List<String> {
         check(isBooted) { "PRootKernel.boot() must be called before building commands" }
 
         val cmd = mutableListOf<String>()
@@ -634,7 +654,8 @@ object PRootKernel {
         // Native offload: route registered handler names to the host-side
         // NativeOffloadServer over the abstract unix socket.
         val handlers = NativeOffloadServer.registeredHandlers
-        if (handlers.isNotEmpty()) {
+        val useNativeOffload = nativeOffload && handlers.isNotEmpty()
+        if (useNativeOffload) {
             cmd.add("--native-offload=${NativeOffloadServer.socketName}:${handlers.joinToString(",")}")
         }
 
@@ -643,8 +664,82 @@ object PRootKernel {
         cmd.add("-c")
         cmd.add(shellCommand)
 
+        logExecutionDiagnostics(
+            executable = rootfsManager.prootBinary.absolutePath,
+            guestExecutable = "/bin/sh",
+            offload = useNativeOffload,
+        )
         Log.d(TAG, "proot cmd: ${cmd.take(cmd.size - 1).joinToString(" ")} <shellCommand ${shellCommand.length} bytes>")
         return cmd
+    }
+
+    fun isNativeOffloadPreferenceEnabled(context: Context): Boolean =
+        context.applicationContext
+            .getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getBoolean(KEY_NATIVE_OFFLOAD_ENABLED, false)
+
+    @Synchronized
+    fun setNativeOffloadEnabled(context: Context, enabled: Boolean): Boolean {
+        var effectiveValue = enabled
+        if (isBooted && enabled) {
+            try {
+                NativeOffloadServer.start(rootfsManager.rootfsDir)
+                installHandlerStubs(rootfsManager.rootfsDir)
+            } catch (e: Exception) {
+                Log.e(TAG, "native_offload enable failed; keeping standard PRoot", e)
+                NativeOffloadServer.stop()
+                effectiveValue = false
+            }
+        } else if (!enabled) {
+            NativeOffloadServer.stop()
+        }
+
+        nativeOffloadEnabled = effectiveValue
+        persistNativeOffloadPreference(context, effectiveValue)
+        Log.w(TAG, "native_offload preference changed enabled=$effectiveValue; applies to new PRoot processes")
+        return effectiveValue
+    }
+
+    private fun persistNativeOffloadPreference(context: Context, enabled: Boolean) {
+        context.applicationContext
+            .getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putBoolean(KEY_NATIVE_OFFLOAD_ENABLED, enabled)
+            .apply()
+    }
+
+    @Synchronized
+    fun disableNativeOffloadAfterCrash(context: Context, exitCode: Int, source: String) {
+        if (!nativeOffloadEnabled) return
+        val signal = signalName(exitCode)
+        Log.e(TAG, "native_offload crash source=$source exit=$exitCode signal=$signal; fallback=plain-proot")
+        setNativeOffloadEnabled(context, false)
+    }
+
+    fun isNativeCrashExitCode(exitCode: Int): Boolean =
+        exitCode == SIGBUS_EXIT_CODE || exitCode == SIGSEGV_EXIT_CODE
+
+    fun signalName(exitCode: Int): String = when (exitCode) {
+        SIGBUS_EXIT_CODE -> "SIGBUS"
+        SIGSEGV_EXIT_CODE -> "SIGSEGV"
+        else -> "none"
+    }
+
+    fun logExecutionDiagnostics(executable: String, guestExecutable: String, offload: Boolean) {
+        if (!isBooted) return
+        val interpreter = sequenceOf(
+            "lib/ld-musl-aarch64.so.1",
+            "lib64/ld-linux-aarch64.so.1",
+        ).map { File(rootfsManager.rootfsDir, it) }
+            .firstOrNull { it.exists() }
+            ?.let { "/" + it.relativeTo(rootfsManager.rootfsDir).invariantSeparatorsPath }
+            ?: "unknown"
+        Log.i(
+            TAG,
+            "exec executable=$executable guest=$guestExecutable offload=$offload " +
+                "deviceAbis=${Build.SUPPORTED_ABIS.joinToString(",")} osArch=${System.getProperty("os.arch")} " +
+                "elfInterpreter=$interpreter fallback=available",
+        )
     }
 
     /** Subdirs that live under `minis-sessions/<sessionId>/` rather than the global pool. */

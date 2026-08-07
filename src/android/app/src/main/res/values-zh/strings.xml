@@ -526,6 +526,9 @@
     <string name="rootfs_browse_section">浏览</string>
     <string name="rootfs_browse_files_label">浏览文件</string>
     <string name="rootfs_mirrors_section">镜像</string>
+    <string name="rootfs_compatibility_section">兼容性</string>
+    <string name="rootfs_native_offload_label">Native offload（实验性）</string>
+    <string name="rootfs_native_offload_description">默认关闭。仅用于 A/B 测试；新建 Shell 将使用所选模式。</string>
     <string name="rootfs_actions_section">操作</string>
     <string name="rootfs_install_label">安装 Rootfs</string>
     <string name="rootfs_reset_label">重置 Rootfs</string>

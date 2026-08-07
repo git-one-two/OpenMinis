@@ -1,0 +1,20 @@
+diff --git a/src/GNUmakefile b/src/GNUmakefile
+--- a/src/GNUmakefile
++++ b/src/GNUmakefile
+@@ -12,6 +12,7 @@ LD       = $(CC)
+ STRIP    ?= $(CROSS_COMPILE)strip
+ OBJCOPY  ?= $(CROSS_COMPILE)objcopy
+ OBJDUMP  ?= $(CROSS_COMPILE)objdump
++READELF  ?= $(CROSS_COMPILE)readelf
+ 
+ CPPFLAGS += -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -I. -I$(VPATH)
+ CFLAGS   += -Wall -Wextra -O2
+@@ -236,7 +237,7 @@ ifdef HAS_LOADER_32BIT
+ endif
+ 
+ loader/loader-info.c: loader/loader
+-	readelf -s $< | awk -f loader/loader-info.awk > $@
++	$(READELF) -s $< | awk -f loader/loader-info.awk > $@
+ 
+ ######################################################################
+ # Dependencies

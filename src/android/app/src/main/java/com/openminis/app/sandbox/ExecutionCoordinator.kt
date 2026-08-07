@@ -39,6 +39,15 @@ object ExecutionCoordinator {
     /** Thread-safe per-session shell registry. */
     private val shells = ConcurrentHashMap<String, PersistentShell>()
 
+    /**
+     * Last session dispatched, retained as a diagnostic/test compatibility
+     * signal after the runtime moved from one global mount to per-session
+     * shells. It does not control mount selection.
+     */
+    @Volatile
+    internal var mountedSessionId: String? = null
+        private set
+
     /** Thread-safe per-session mutex registry. */
     private val mutexes = ConcurrentHashMap<String, Mutex>()
 
@@ -80,6 +89,7 @@ object ExecutionCoordinator {
 
         return mutex.withLock {
             val startTime = System.currentTimeMillis()
+            mountedSessionId = sessionId
 
             // Auto-boot PRoot if not already booted
             if (!PRootKernel.isBooted) {
@@ -233,6 +243,7 @@ object ExecutionCoordinator {
         // restarts from a clean baseline, so the next applyEnvironment
         // shouldn't try to `unset` keys that don't exist in the new shell.
         lastInjectedKeys.remove(sessionId)
+        if (mountedSessionId == sessionId) mountedSessionId = null
         shell?.stop()
         if (shell != null) Log.i(TAG, "[$sessionId] Shell terminated")
     }
@@ -246,6 +257,7 @@ object ExecutionCoordinator {
             val shell = shells.remove(sessionId)
             // T124a: snapshot belongs to the now-dead shell.
             lastInjectedKeys.remove(sessionId)
+            if (mountedSessionId == sessionId) mountedSessionId = null
             shell?.stop()
             Log.i(TAG, "[$sessionId] Shell stopped by user")
         } else {
@@ -253,6 +265,7 @@ object ExecutionCoordinator {
             shells.values.forEach { it.stop() }
             shells.clear()
             lastInjectedKeys.clear()
+            mountedSessionId = null
             ShellExecutor.destroyCurrent()
         }
     }

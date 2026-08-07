@@ -28,6 +28,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 PROOT_DIR="$SCRIPT_DIR/proot"
+PROOT_PATCH_DIR="$SCRIPT_DIR/patches"
 TALLOC_DIR="$SCRIPT_DIR/talloc"
 BUILD_DIR="$SCRIPT_DIR/build/proot-android"
 ASSETS_DIR="$PROJECT_ROOT/src/android/app/src/main/assets"
@@ -93,9 +94,16 @@ setup_toolchain() {
     log_info "Using NDK: $NDK_HOME"
 
     local host_tag
+    local cc_suffix=""
+    local tool_suffix=""
     case "$(uname -s)-$(uname -m)" in
         Darwin-*)         host_tag="darwin-x86_64" ;;
         Linux-x86_64)     host_tag="linux-x86_64" ;;
+        MINGW*-x86_64|MSYS*-x86_64|CYGWIN*-x86_64)
+            host_tag="windows-x86_64"
+            cc_suffix=".cmd"
+            tool_suffix=".exe"
+            ;;
         *)                log_error "Unsupported host: $(uname -s) $(uname -m)" ;;
     esac
 
@@ -104,15 +112,18 @@ setup_toolchain() {
         log_error "Toolchain dir missing: $TOOLCHAIN_BIN"
     fi
 
-    CC="$TOOLCHAIN_BIN/${NDK_TRIPLE}${ANDROID_API}-clang"
-    AR="$TOOLCHAIN_BIN/llvm-ar"
-    STRIP="$TOOLCHAIN_BIN/llvm-strip"
-    OBJCOPY="$TOOLCHAIN_BIN/llvm-objcopy"
-    OBJDUMP="$TOOLCHAIN_BIN/llvm-objdump"
-    RANLIB="$TOOLCHAIN_BIN/llvm-ranlib"
+    CC="$TOOLCHAIN_BIN/${NDK_TRIPLE}${ANDROID_API}-clang${cc_suffix}"
+    AR="$TOOLCHAIN_BIN/llvm-ar${tool_suffix}"
+    STRIP="$TOOLCHAIN_BIN/llvm-strip${tool_suffix}"
+    OBJCOPY="$TOOLCHAIN_BIN/llvm-objcopy${tool_suffix}"
+    OBJDUMP="$TOOLCHAIN_BIN/llvm-objdump${tool_suffix}"
+    READELF="$TOOLCHAIN_BIN/llvm-readelf${tool_suffix}"
+    RANLIB="$TOOLCHAIN_BIN/llvm-ranlib${tool_suffix}"
 
-    for tool in "$CC" "$AR" "$STRIP" "$OBJCOPY" "$OBJDUMP" "$RANLIB"; do
-        if [ ! -x "$tool" ]; then
+    for tool in "$CC" "$AR" "$STRIP" "$OBJCOPY" "$OBJDUMP" "$READELF" "$RANLIB"; do
+        # Windows NDK .cmd launchers do not carry a POSIX executable bit but
+        # are runnable by MSYS/Git Bash. Existence is the portable check here.
+        if [ ! -f "$tool" ]; then
             log_error "Missing toolchain binary: $tool"
         fi
     done
@@ -264,6 +275,7 @@ build_proot() {
             STRIP="$STRIP" \
             OBJCOPY="$OBJCOPY" \
             OBJDUMP="$OBJDUMP" \
+            READELF="$READELF" \
             CPPFLAGS="$cppflags" \
             CFLAGS="$cflags" \
             LDFLAGS="$ldflags" \
@@ -284,6 +296,26 @@ build_proot() {
 
     log_success "proot built: $built ($(du -h "$built" | awk '{print $1}'))"
     BUILT_PROOT="$built"
+}
+
+# Keep local PRoot changes reproducible from the main repository even though
+# PRoot itself is a pinned git submodule. Patches are idempotent so incremental
+# builds do not fail after the first application.
+apply_proot_patches() {
+    if [ ! -d "$PROOT_PATCH_DIR" ]; then
+        return
+    fi
+
+    for patch in "$PROOT_PATCH_DIR"/*.patch; do
+        [ -f "$patch" ] || continue
+        if git -C "$PROOT_DIR" apply --reverse --check "$patch" >/dev/null 2>&1; then
+            log_info "PRoot patch already applied: $(basename "$patch")"
+        else
+            git -C "$PROOT_DIR" apply --check "$patch"
+            git -C "$PROOT_DIR" apply "$patch"
+            log_success "Applied PRoot patch: $(basename "$patch")"
+        fi
+    done
 }
 
 # ----------------------------------------------------------------------------
@@ -337,6 +369,7 @@ main() {
     setup_toolchain
     fetch_talloc
     build_talloc
+    apply_proot_patches
     build_proot
     install_asset
 

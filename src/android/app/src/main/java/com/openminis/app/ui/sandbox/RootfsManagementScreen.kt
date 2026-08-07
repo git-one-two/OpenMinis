@@ -37,6 +37,7 @@ import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -150,6 +151,20 @@ fun RootfsManagementScreen(
             }
 
             if (state.isInstalled) {
+                SettingsSection(title = stringResource(R.string.rootfs_compatibility_section)) {
+                    ListItem(
+                        headlineContent = { Text(stringResource(R.string.rootfs_native_offload_label)) },
+                        supportingContent = { Text(stringResource(R.string.rootfs_native_offload_description)) },
+                        trailingContent = {
+                            Switch(
+                                checked = state.nativeOffloadEnabled,
+                                onCheckedChange = { viewModel.setNativeOffloadEnabled(context, it) },
+                            )
+                        },
+                        colors = transparentListItemColors(),
+                    )
+                }
+
                 // --- Browse section ---
                 SettingsSection(title = stringResource(R.string.rootfs_browse_section)) {
                     ListItem(

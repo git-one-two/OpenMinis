@@ -31,6 +31,7 @@ android {
     // Android 16 behavior changes; the Live Updates path is runtime-gated on
     // Build.VERSION.SDK_INT >= 36 (see DynamicIslandSupport / AgentForegroundService).
     compileSdk = 36
+    ndkVersion = "28.1.13356709"
 
     defaultConfig {
         applicationId = "com.openminis.app"
@@ -69,6 +70,12 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Coexists with the official com.openminis.app installation and
+            // uses the normal local debug key only.
+            applicationIdSuffix = ".dev"
+            versionNameSuffix = "-dev"
+        }
         release {
             isMinifyEnabled = true
             proguardFiles(
@@ -141,9 +148,9 @@ tasks.named("preBuild") { dependsOn(copyBashismRules) }
 val stageDebugSkillAssets by tasks.registering(Exec::class) {
     val script = rootProject.file("../../scripts/gen_debug_skill_android.sh")
     val skillDir = rootProject.file("../../.claude/skills/debug-server")
-    onlyIf { script.exists() }
-    inputs.dir(skillDir).optional()
-    inputs.file(script).optional()
+    onlyIf { script.exists() && skillDir.exists() }
+    if (skillDir.exists()) inputs.dir(skillDir)
+    if (script.exists()) inputs.file(script)
     outputs.dir(layout.projectDirectory.dir("src/debug/assets/debug-skill"))
     commandLine("bash", script.absolutePath)
 }

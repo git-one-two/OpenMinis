@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.openminis.app.sandbox.RootfsInstallState
 import com.openminis.app.sandbox.RootfsManager
+import com.openminis.app.sandbox.PRootKernel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,6 +22,7 @@ data class RootfsManagementUiState(
     val rootfsSize: Long = 0L,
     val rootfsPath: String = "",
     val hasBackup: Boolean = false,
+    val nativeOffloadEnabled: Boolean = false,
     /** Current install phase + 0..1 progress (null when not installing). */
     val installProgress: Float? = null,
 )
@@ -75,6 +77,7 @@ class RootfsManagementViewModel : ViewModel() {
         _uiState.value = _uiState.value.copy(
             isInstalled = manager.isInstalled,
             rootfsPath = manager.rootfsDir.absolutePath,
+            nativeOffloadEnabled = PRootKernel.isNativeOffloadPreferenceEnabled(context),
         )
 
         if (manager.isInstalled) {
@@ -85,6 +88,21 @@ class RootfsManagementViewModel : ViewModel() {
                 } catch (_: Exception) { }
             }
         }
+    }
+
+    fun setNativeOffloadEnabled(context: Context, enabled: Boolean) {
+        val effectiveValue = PRootKernel.setNativeOffloadEnabled(context, enabled)
+        _uiState.value = _uiState.value.copy(
+            nativeOffloadEnabled = effectiveValue,
+            lastOperationSuccess = effectiveValue == enabled,
+            resultMessage = if (enabled && !effectiveValue) {
+                "Native offload could not start; standard PRoot remains active"
+            } else if (effectiveValue) {
+                "Native offload enabled for new shell processes"
+            } else {
+                "Native offload disabled; new shells use standard PRoot"
+            },
+        )
     }
 
     fun install(context: Context) {
