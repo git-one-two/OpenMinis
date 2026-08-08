@@ -653,11 +653,13 @@ object PRootKernel {
 
         // Native offload: route registered handler names to the host-side
         // NativeOffloadServer over the abstract unix socket.
-        val handlers = NativeOffloadServer.registeredHandlers
-        val useNativeOffload = nativeOffload && handlers.isNotEmpty()
-        if (useNativeOffload) {
-            cmd.add("--native-offload=${NativeOffloadServer.socketName}:${handlers.joinToString(",")}")
-        }
+        val nativeOffloadArgument = buildNativeOffloadArgument(
+            enabled = nativeOffload,
+            socketName = NativeOffloadServer.socketName,
+            handlers = NativeOffloadServer.registeredHandlers,
+        )
+        val useNativeOffload = nativeOffloadArgument != null
+        nativeOffloadArgument?.let(cmd::add)
 
         // Shell command
         cmd.add("/bin/sh")
@@ -671,6 +673,16 @@ object PRootKernel {
         )
         Log.d(TAG, "proot cmd: ${cmd.take(cmd.size - 1).joinToString(" ")} <shellCommand ${shellCommand.length} bytes>")
         return cmd
+    }
+
+    internal fun buildNativeOffloadArgument(
+        enabled: Boolean,
+        socketName: String,
+        handlers: Collection<String>,
+    ): String? = if (enabled && handlers.isNotEmpty()) {
+        "--native-offload=$socketName:${handlers.joinToString(",")}"
+    } else {
+        null
     }
 
     fun isNativeOffloadPreferenceEnabled(context: Context): Boolean =

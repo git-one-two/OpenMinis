@@ -361,10 +361,11 @@ class TerminalSession(private val context: Context) {
             cmd.add("-b"); cmd.add("$hostPath:$linuxPath")
         }
 
-        val handlers = NativeOffloadServer.registeredHandlers
-        if (handlers.isNotEmpty()) {
-            cmd.add("--native-offload=${NativeOffloadServer.socketName}:${handlers.joinToString(",")}")
-        }
+        PRootKernel.buildNativeOffloadArgument(
+            enabled = PRootKernel.nativeOffloadEnabled,
+            socketName = NativeOffloadServer.socketName,
+            handlers = NativeOffloadServer.registeredHandlers,
+        )?.let(cmd::add)
 
         // Login + interactive so /etc/profile is sourced (readline, history, color aliases).
         cmd.add("/bin/sh")
