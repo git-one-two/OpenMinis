@@ -5,9 +5,11 @@ set -e
 # PRoot Android Build Script (OpenMinis fork)
 # ============================================================================
 # Cross-compiles a statically-linked libtalloc and the OpenMinis/proot fork
-# for Android aarch64 using the Android NDK. Produces a single self-contained
-# proot binary with the loader bundled, and installs it into
-# `src/android/app/src/main/assets/proot-aarch64`.
+# for Android aarch64 using the Android NDK. Produces a proot binary with its
+# loader bundled, and also packages the loaders as native libraries. The
+# external copies are required on Android variants that prohibit executing the
+# bundled loader through /proc/self/fd (for example HarmonyOS compatibility
+# containers).
 #
 # Repository: https://github.com/OpenMinis/proot (fork of termux/proot)
 #
@@ -37,6 +39,8 @@ OUTPUT_BIN="$ASSETS_DIR/proot-aarch64"
 # app's nativeLibraryDir at install time). Keep both in sync.
 JNILIBS_DIR="$PROJECT_ROOT/src/android/app/src/main/jniLibs/arm64-v8a"
 JNILIBS_BIN="$JNILIBS_DIR/libproot.so"
+JNILIBS_LOADER_BIN="$JNILIBS_DIR/libproot-loader.so"
+JNILIBS_LOADER32_BIN="$JNILIBS_DIR/libproot-loader32.so"
 
 # talloc version pinned to a known-good release. Single-file build avoids
 # Samba's waf-based build system entirely (we just compile talloc.c).
@@ -325,6 +329,11 @@ install_asset() {
     if [ ! -f "$BUILT_PROOT" ]; then
         log_error "No proot binary to install"
     fi
+    local built_loader="$PROOT_DIR/src/loader/loader"
+    local built_loader32="$PROOT_DIR/src/loader/loader-m32"
+    if [ ! -f "$built_loader" ] || [ ! -f "$built_loader32" ]; then
+        log_error "PRoot loaders are missing; refusing to build an APK that can fail with execve Permission denied"
+    fi
     mkdir -p "$ASSETS_DIR"
 
     # No .bak of the previous binary: anything left in assets/ is packaged
@@ -338,6 +347,16 @@ install_asset() {
     mkdir -p "$JNILIBS_DIR"
     install -m 0755 "$BUILT_PROOT" "$JNILIBS_BIN"
     log_success "Installed: $JNILIBS_BIN ($(du -h "$JNILIBS_BIN" | awk '{print $1}'))"
+
+    # PRoot normally extracts its bundled loader through /proc/self/fd. Some
+    # Android compatibility layers reject execve() on that fd with EACCES.
+    # Android extracts jniLibs into an executable nativeLibraryDir, and
+    # PRootKernel points PROOT_LOADER(_32) at these stable filesystem paths.
+    install -m 0755 "$built_loader" "$JNILIBS_LOADER_BIN"
+    install -m 0755 "$built_loader32" "$JNILIBS_LOADER32_BIN"
+    "$STRIP" "$JNILIBS_LOADER_BIN" "$JNILIBS_LOADER32_BIN"
+    log_success "Installed: $JNILIBS_LOADER_BIN ($(du -h "$JNILIBS_LOADER_BIN" | awk '{print $1}'))"
+    log_success "Installed: $JNILIBS_LOADER32_BIN ($(du -h "$JNILIBS_LOADER32_BIN" | awk '{print $1}'))"
 }
 
 # ----------------------------------------------------------------------------

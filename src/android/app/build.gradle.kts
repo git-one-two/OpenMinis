@@ -135,7 +135,28 @@ val copyBashismRules by tasks.registering(Copy::class) {
 }
 tasks.matching { it.name.startsWith("merge") && it.name.endsWith("Assets") }
     .configureEach { dependsOn(copyBashismRules) }
-tasks.named("preBuild") { dependsOn(copyBashismRules) }
+
+// The embedded PRoot loader executes through /proc/self/fd. HarmonyOS and
+// some Android compatibility containers reject that execve() with EACCES, so
+// deps/build_proot.sh also stages stable external loaders in nativeLibraryDir.
+// Fail the build instead of silently shipping a sandbox that cannot start.
+val verifyProotArtifacts by tasks.registering {
+    val required = listOf(
+        layout.projectDirectory.file("src/main/assets/proot-aarch64"),
+        layout.projectDirectory.file("src/main/jniLibs/arm64-v8a/libproot.so"),
+        layout.projectDirectory.file("src/main/jniLibs/arm64-v8a/libproot-loader.so"),
+        layout.projectDirectory.file("src/main/jniLibs/arm64-v8a/libproot-loader32.so"),
+    )
+    inputs.files(required)
+    doLast {
+        val missing = required.map { it.asFile }.filterNot { it.isFile && it.length() > 0L }
+        check(missing.isEmpty()) {
+            "Missing PRoot build artifacts: ${missing.joinToString()}. Run ./deps/build_proot.sh first."
+        }
+    }
+}
+
+tasks.named("preBuild") { dependsOn(copyBashismRules, verifyProotArtifacts) }
 
 // [T-android-debugserver-skill] Stage the debug-server skill + an Android
 // reference client into the DEBUG-ONLY asset source set, so the debug server

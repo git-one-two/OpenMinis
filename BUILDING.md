@@ -168,7 +168,10 @@ image.
 
 - **`build_proot.sh`** cross-compiles a static `libtalloc` and the
   `deps/proot` fork with the NDK, then installs the binary into the app's
-  `assets/` and `jniLibs/arm64-v8a/`.
+  `assets/` and `jniLibs/arm64-v8a/`. It also packages the 64-bit and 32-bit
+  PRoot loaders as `libproot-loader*.so`; do not omit them. Android variants
+  that block execution through `/proc/self/fd` need these external loader
+  paths to start Alpine binaries.
 - **`prepare_android_sandbox.sh`** downloads the Alpine aarch64 minirootfs into
   `assets/`.
 
