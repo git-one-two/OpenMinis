@@ -156,7 +156,26 @@ val verifyProotArtifacts by tasks.registering {
     }
 }
 
-tasks.named("preBuild") { dependsOn(copyBashismRules, verifyProotArtifacts) }
+val verifySandboxLineEndings by tasks.registering {
+    val defaultMount = layout.projectDirectory.dir("src/main/assets/default_mount")
+    inputs.dir(defaultMount)
+    doLast {
+        val crlfFiles = defaultMount.asFile.walkTopDown()
+            .filter { it.isFile }
+            .filter { file ->
+                val bytes = file.readBytes()
+                (0 until bytes.lastIndex).any { i -> bytes[i] == 13.toByte() && bytes[i + 1] == 10.toByte() }
+            }
+            .toList()
+        check(crlfFiles.isEmpty()) {
+            "Sandbox assets must use LF line endings: ${crlfFiles.joinToString()}"
+        }
+    }
+}
+
+tasks.named("preBuild") {
+    dependsOn(copyBashismRules, verifyProotArtifacts, verifySandboxLineEndings)
+}
 
 // [T-android-debugserver-skill] Stage the debug-server skill + an Android
 // reference client into the DEBUG-ONLY asset source set, so the debug server

@@ -1,1 +1,7 @@
 deps/patches/*.patch whitespace=-blank-at-eol,-space-before-tab
+
+# Files executed inside Alpine must keep Unix line endings even when the
+# repository is checked out on Windows. CRLF leaves a literal carriage return
+# in ash blank lines and extensionless shebang wrappers.
+*.sh text eol=lf
+src/android/app/src/main/assets/default_mount/** text eol=lf
