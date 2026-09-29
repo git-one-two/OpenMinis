@@ -130,6 +130,7 @@ setup_toolchain() {
     local host_tag
     local cc_suffix=""
     local tool_suffix=""
+    MAKE_SHELL="${SHELL:-/bin/sh}"
     case "$(uname -s)-$(uname -m)" in
         Darwin-*)         host_tag="darwin-x86_64" ;;
         Linux-x86_64)     host_tag="linux-x86_64" ;;
@@ -137,6 +138,12 @@ setup_toolchain() {
             host_tag="windows-x86_64"
             cc_suffix=".cmd"
             tool_suffix=".exe"
+            # Native Windows GNU Make cannot reliably invoke a shell whose
+            # absolute path contains spaces (e.g. C:\\Program Files\\Git).
+            # Give it the 8.3 short path so $(shell ...) and recipes work.
+            if command -v cygpath >/dev/null 2>&1; then
+                MAKE_SHELL="$(cygpath -m -s /usr/bin/sh)"
+            fi
             ;;
         *)                log_error "Unsupported host: $(uname -s) $(uname -m)" ;;
     esac
@@ -321,10 +328,11 @@ build_proot() {
     (
         cd "$PROOT_DIR/src"
         if [ "$FORCE_REBUILD" = "1" ]; then
-            make clean >/dev/null 2>&1 || true
+            make SHELL="$MAKE_SHELL" clean >/dev/null 2>&1 || true
         fi
 
         make \
+            SHELL="$MAKE_SHELL" \
             CC="$CC" \
             STRIP="$STRIP" \
             OBJCOPY="$OBJCOPY" \
@@ -501,7 +509,7 @@ do_clean() {
     log_info "Cleaning build artifacts..."
     rm -rf "$BUILD_DIR"
     if [ -d "$PROOT_DIR/src" ]; then
-        (cd "$PROOT_DIR/src" && make clean >/dev/null 2>&1 || true)
+        (cd "$PROOT_DIR/src" && make SHELL="$MAKE_SHELL" clean >/dev/null 2>&1 || true)
     fi
     log_success "Clean complete"
 }
