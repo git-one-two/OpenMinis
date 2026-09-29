@@ -77,6 +77,10 @@ android {
 
     buildTypes {
         getByName("debug") {
+            // Keep the custom debug build installable beside the official app.
+            // This preserves the package identity used by the previous dev build.
+            applicationIdSuffix = ".dev"
+            versionNameSuffix = "-dev"
             buildConfigField("boolean", "DEV_TOOLS", "true")
         }
         // `perf`: the debug variant minus android:debuggable. ART refuses to
