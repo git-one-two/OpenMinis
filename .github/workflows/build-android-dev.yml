@@ -1,0 +1,93 @@
+name: Build OpenMinis 1.14 Dev APK
+
+on:
+  push:
+    branches:
+      - upgrade/openminis-1.14-harmony
+    paths:
+      - ".github/workflows/build-android-dev.yml"
+      - "deps/**"
+      - "scripts/**"
+      - "src/android/**"
+      - ".gitattributes"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout source and submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 1
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: "1.27.0"
+          cache: true
+          cache-dependency-path: deps/rclone-mobile/go.sum
+
+      - name: Install Android SDK components
+        shell: bash
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"             "platforms;android-36"             "build-tools;36.1.0"             "ndk;28.1.13356709"             "cmake;3.22.1"
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/28.1.13356709" >> "$GITHUB_ENV"
+
+      - name: Install gomobile
+        shell: bash
+        run: |
+          go install golang.org/x/mobile/cmd/gomobile@latest
+          gomobile init
+
+      - name: Build PRoot and Android sandbox
+        shell: bash
+        run: |
+          chmod +x deps/build_proot.sh scripts/prepare_android_sandbox.sh
+          ./deps/build_proot.sh
+          ./scripts/prepare_android_sandbox.sh
+
+      - name: Build rclone Android library
+        shell: bash
+        run: |
+          chmod +x deps/build_rclone_android.sh
+          ./deps/build_rclone_android.sh
+          mkdir -p src/android/app/libs
+          cp deps/build/rclone/rclone.aar src/android/app/libs/rclone.aar
+
+      - name: Build 1.14 dev APK
+        shell: bash
+        working-directory: src/android
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon :app:assembleDebug
+
+      - name: Inspect APK identity
+        shell: bash
+        run: |
+          APK="src/android/app/build/outputs/apk/debug/app-debug.apk"
+          test -f "$APK"
+          "$ANDROID_HOME/build-tools/36.1.0/aapt" dump badging "$APK" | head -n 3
+          "$ANDROID_HOME/build-tools/36.1.0/apksigner" verify --print-certs "$APK" || true
+          sha256sum "$APK"
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: openminis-1.14-dev-ephemeral-signed
+          path: src/android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 7
