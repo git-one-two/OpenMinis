@@ -1,0 +1,3 @@
+# Keep scripts and guest-side sandbox assets Unix-native on Windows checkouts.
+*.sh text eol=lf
+src/android/app/src/main/assets/default_mount/** text eol=lf
