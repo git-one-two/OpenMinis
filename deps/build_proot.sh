@@ -51,6 +51,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 PROOT_DIR="$SCRIPT_DIR/proot"
+PROOT_PATCH_DIR="$SCRIPT_DIR/patches"
 TALLOC_DIR="$SCRIPT_DIR/talloc"
 BUILD_DIR="$SCRIPT_DIR/build/proot-android"
 ASSETS_DIR="$PROJECT_ROOT/src/android/app/src/main/assets"
@@ -97,16 +98,27 @@ resolve_ndk() {
         return
     fi
 
-    # Auto-detect highest available NDK in the SDK folder
-    local base="$HOME/Library/Android/sdk/ndk"
-    if [ -d "$base" ]; then
-        local latest
-        latest=$(ls "$base" 2>/dev/null | sort -V | tail -n 1)
-        if [ -n "$latest" ]; then
-            echo "$base/$latest"
-            return
-        fi
+    # Auto-detect highest available NDK in the common SDK folders.
+    # macOS uses ~/Library/Android/sdk; Git Bash on Windows sees the normal
+    # Android Studio SDK under ~/AppData/Local/Android/Sdk.
+    local bases=(
+        "$HOME/Library/Android/sdk/ndk"
+        "$HOME/AppData/Local/Android/Sdk/ndk"
+    )
+    if [ -n "${LOCALAPPDATA:-}" ] && command -v cygpath >/dev/null 2>&1; then
+        bases+=("$(cygpath -u "$LOCALAPPDATA")/Android/Sdk/ndk")
     fi
+
+    local base latest
+    for base in "${bases[@]}"; do
+        if [ -d "$base" ]; then
+            latest=$(ls "$base" 2>/dev/null | sort -V | tail -n 1)
+            if [ -n "$latest" ]; then
+                echo "$base/$latest"
+                return
+            fi
+        fi
+    done
 
     log_error "Android NDK not found. Set \$ANDROID_NDK_HOME or install via Android Studio."
 }
@@ -116,9 +128,16 @@ setup_toolchain() {
     log_info "Using NDK: $NDK_HOME"
 
     local host_tag
+    local cc_suffix=""
+    local tool_suffix=""
     case "$(uname -s)-$(uname -m)" in
         Darwin-*)         host_tag="darwin-x86_64" ;;
         Linux-x86_64)     host_tag="linux-x86_64" ;;
+        MINGW*-x86_64|MSYS*-x86_64|CYGWIN*-x86_64)
+            host_tag="windows-x86_64"
+            cc_suffix=".cmd"
+            tool_suffix=".exe"
+            ;;
         *)                log_error "Unsupported host: $(uname -s) $(uname -m)" ;;
     esac
 
@@ -127,15 +146,18 @@ setup_toolchain() {
         log_error "Toolchain dir missing: $TOOLCHAIN_BIN"
     fi
 
-    CC="$TOOLCHAIN_BIN/${NDK_TRIPLE}${ANDROID_API}-clang"
-    AR="$TOOLCHAIN_BIN/llvm-ar"
-    STRIP="$TOOLCHAIN_BIN/llvm-strip"
-    OBJCOPY="$TOOLCHAIN_BIN/llvm-objcopy"
-    OBJDUMP="$TOOLCHAIN_BIN/llvm-objdump"
-    RANLIB="$TOOLCHAIN_BIN/llvm-ranlib"
+    CC="$TOOLCHAIN_BIN/${NDK_TRIPLE}${ANDROID_API}-clang${cc_suffix}"
+    AR="$TOOLCHAIN_BIN/llvm-ar${tool_suffix}"
+    STRIP="$TOOLCHAIN_BIN/llvm-strip${tool_suffix}"
+    OBJCOPY="$TOOLCHAIN_BIN/llvm-objcopy${tool_suffix}"
+    OBJDUMP="$TOOLCHAIN_BIN/llvm-objdump${tool_suffix}"
+    READELF="$TOOLCHAIN_BIN/llvm-readelf${tool_suffix}"
+    RANLIB="$TOOLCHAIN_BIN/llvm-ranlib${tool_suffix}"
 
-    for tool in "$CC" "$AR" "$STRIP" "$OBJCOPY" "$OBJDUMP" "$RANLIB"; do
-        if [ ! -x "$tool" ]; then
+    for tool in "$CC" "$AR" "$STRIP" "$OBJCOPY" "$OBJDUMP" "$READELF" "$RANLIB"; do
+        # Windows NDK launchers do not carry a POSIX executable bit in Git Bash.
+        # Existence is the portable check across macOS/Linux/Windows.
+        if [ ! -f "$tool" ]; then
             log_error "Missing toolchain binary: $tool"
         fi
     done
@@ -257,6 +279,26 @@ build_talloc() {
 }
 
 # ----------------------------------------------------------------------------
+# Stage: apply local PRoot build-compatibility patches
+# ----------------------------------------------------------------------------
+apply_proot_patches() {
+    if [ ! -d "$PROOT_PATCH_DIR" ]; then
+        return
+    fi
+
+    for patch in "$PROOT_PATCH_DIR"/*.patch; do
+        [ -f "$patch" ] || continue
+        if git -C "$PROOT_DIR" apply --reverse --check "$patch" >/dev/null 2>&1; then
+            log_info "PRoot patch already applied: $(basename "$patch")"
+        else
+            git -C "$PROOT_DIR" apply --check "$patch"
+            git -C "$PROOT_DIR" apply "$patch"
+            log_success "Applied PRoot patch: $(basename "$patch")"
+        fi
+    done
+}
+
+# ----------------------------------------------------------------------------
 # Stage: build proot
 # ----------------------------------------------------------------------------
 build_proot() {
@@ -287,6 +329,7 @@ build_proot() {
             STRIP="$STRIP" \
             OBJCOPY="$OBJCOPY" \
             OBJDUMP="$OBJDUMP" \
+            READELF="$READELF" \
             CPPFLAGS="$cppflags" \
             CFLAGS="$cflags" \
             LDFLAGS="$ldflags" \
@@ -480,6 +523,7 @@ main() {
     setup_toolchain
     fetch_talloc
     build_talloc
+    apply_proot_patches
     build_proot
     install_asset
     verify_artifacts
