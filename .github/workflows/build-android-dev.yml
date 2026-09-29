@@ -1,4 +1,5 @@
 name: Build OpenMinis 1.14 Dev APK
+# CI trigger: 1.14 Harmony dev build
 
 on:
   push:
