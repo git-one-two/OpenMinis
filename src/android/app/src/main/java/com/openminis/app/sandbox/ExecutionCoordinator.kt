@@ -314,6 +314,14 @@ object ExecutionCoordinator {
     private val mutexes = ConcurrentHashMap<String, Mutex>()
 
     /**
+     * The personal dev build serializes Agent PRoot invocations globally.
+     * The field device showed 4-5 concurrent PRoot instances plus low-memory
+     * pressure while fork/exec was already unstable; removing that amplifier
+     * costs throughput but makes the stability baseline measurable.
+     */
+    private val conservativeAgentMutex = Mutex()
+
+    /**
      * [T-android-a11y-helper-mount] dispatch session id -> the session whose
      * `/var/minis` directories its shell binds (fsSessionId), recorded only
      * when they differ (a helper / sub agent sharing its parent's workspace,
@@ -449,7 +457,13 @@ object ExecutionCoordinator {
             isStartFailure = ::isStartFailure,
         ) {
             if (executionStrategy == ShellExecutionStrategy.FRESH_PROCESS) {
-                executeFresh(sessionId, command, timeout, lineCallback, fsSessionId)
+                if (AgentSandboxCompatibility.serializeAgentCommands(appContext)) {
+                    conservativeAgentMutex.withLock {
+                        executeFresh(sessionId, command, timeout, lineCallback, fsSessionId)
+                    }
+                } else {
+                    executeFresh(sessionId, command, timeout, lineCallback, fsSessionId)
+                }
             } else {
                 executeWarm(sessionId, command, timeout, lineCallback, fsSessionId)
             }
