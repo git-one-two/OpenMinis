@@ -72,32 +72,41 @@ object ExecutionCoordinator {
         val bindMounts = buildSessionBindMounts(fsSessionId ?: sessionId)
         val envVars = envVarRepository?.allAsDict() ?: emptyMap()
 
-        suspend fun attempt(noSeccomp: Boolean): Pair<String, Int> {
+        data class AttemptResult(
+            val output: String,
+            val exitCode: Int,
+            val commandExitRecorded: Boolean,
+            val processExitCode: Int?,
+        )
+
+        suspend fun attempt(
+            commandToRun: String,
+            noSeccomp: Boolean,
+            nativeOffload: Boolean,
+            callback: ((String) -> Unit)?,
+        ): AttemptResult {
             val shell = FreshProcessShell(
                 context = appContext,
                 sessionId = sessionId,
                 sessionBindMounts = bindMounts,
                 useNoSeccomp = noSeccomp,
+                useNativeOffload = nativeOffload,
             )
-            // [T-android-shell-fresh-process] Step 5. Register before running so
-            // stopCurrentCommand() can reach this command. A fresh shell is owned
-            // by this call frame, unlike a pooled PersistentShell, so without the
-            // registry the Stop button would have nothing to kill and a running
-            // command would ignore it.
-            // [T-android-fresh-shells-concurrent] The inner set is a concurrent
-            // key set: it is mutated here and in the finally below under the
-            // map's bin lock, but iterated by stopFreshShells() from the Stop /
-            // terminate thread WITHOUT that lock, so a plain LinkedHashSet
-            // could throw ConcurrentModificationException mid-Stop.
             freshShells.compute(sessionId) { _, existing ->
                 (existing ?: newFreshShellSet()).also { it.add(shell) }
             }
             return try {
-                shell.execute(
-                    command = command,
+                val (output, exitCode) = shell.execute(
+                    command = commandToRun,
                     timeout = timeout,
                     envVars = envVars,
-                    lineCallback = lineCallback,
+                    lineCallback = callback,
+                )
+                AttemptResult(
+                    output = output,
+                    exitCode = exitCode,
+                    commandExitRecorded = shell.commandExitRecorded,
+                    processExitCode = shell.lastProcessExitCode,
                 )
             } finally {
                 freshShells.computeIfPresent(sessionId) { _, set ->
@@ -107,33 +116,144 @@ object ExecutionCoordinator {
             }
         }
 
-        var (rawOutput, exitCode) = attempt(noSeccomp = false)
-        // [T-android-fresh-seccomp-selfheal / GH#186] The warm path
-        // (PersistentShell), ShellExecutor and TerminalSession all retry once
-        // with PROOT_NO_SECCOMP=1 when the child dies on an early fatal signal
-        // with no output. The fresh path became the default without that
-        // self-heal, so on a GH#186 device every shell_execute died with
-        // 135/139. Same narrow gate as the others (SeccompFallbackPolicy):
-        // a normal failure, a timeout (124) or a user Stop (130) never
-        // qualifies, and it fires at most once per command.
+        fun isSandboxFatal(result: AttemptResult): Boolean =
+            AgentSandboxCompatibility.isProotFatal(
+                commandExitRecorded = result.commandExitRecorded,
+                processExitCode = result.processExitCode,
+            )
+
+        var forceNoSeccomp = AgentSandboxCompatibility.forceNoSeccomp(appContext)
+        var nativeOffload = AgentSandboxCompatibility.nativeOffloadEnabled(appContext)
+        var current = attempt(
+            commandToRun = command,
+            noSeccomp = forceNoSeccomp,
+            nativeOffload = nativeOffload,
+            callback = lineCallback,
+        )
+
+        // Preserve upstream's deliberately narrow automatic retry: an early,
+        // no-output fatal signal is safe to rerun because the guest command
+        // never got far enough to have observable side effects.
         val firstDurationMs = System.currentTimeMillis() - startTime
-        if (SeccompFallbackPolicy.shouldRetryWithoutSeccomp(
-                exitCode = exitCode,
+        if (!forceNoSeccomp &&
+            SeccompFallbackPolicy.shouldRetryWithoutSeccomp(
+                exitCode = current.exitCode,
                 durationMs = firstDurationMs,
-                producedOutput = rawOutput.isNotEmpty(),
+                producedOutput = current.output.isNotEmpty(),
                 alreadyRetried = false,
             )
         ) {
             com.openminis.app.logging.AppLogger.warning(
                 TAG,
-                SeccompFallbackPolicy.retryLogLine(exitCode, firstDurationMs, "fresh shell command"),
+                SeccompFallbackPolicy.retryLogLine(
+                    current.exitCode,
+                    firstDurationMs,
+                    "fresh shell command",
+                ),
             )
-            // No output came out of the first attempt (a precondition of the
-            // retry), so reusing lineCallback cannot duplicate anything.
-            val retried = attempt(noSeccomp = true)
-            rawOutput = retried.first
-            exitCode = retried.second
+            current = attempt(
+                commandToRun = command,
+                noSeccomp = true,
+                nativeOffload = nativeOffload,
+                callback = lineCallback,
+            )
+            forceNoSeccomp = true
+            if (!isSandboxFatal(current)) {
+                AgentSandboxCompatibility.rememberNoSeccomp(
+                    appContext,
+                    "early fatal signal recovered on retry",
+                )
+            }
         }
+
+        var recoveryNote: String? = null
+
+        // A status-file-less fatal exit means PRoot itself died. This is
+        // categorically different from a user program returning 139: the
+        // wrapper never recorded a command exit. Do NOT blindly rerun an
+        // arbitrary command here because it may already have had side effects.
+        // Instead probe the sandbox with the side-effect-free `true`, persist
+        // the working compatibility mode, and tell the Agent to retry once.
+        if (isSandboxFatal(current)) {
+            val signal = AgentSandboxCompatibility.signalName(current.processExitCode)
+            com.openminis.app.logging.AppLogger.error(
+                TAG,
+                "[$sessionId] Agent PRoot crashed with $signal " +
+                    "processExit=${current.processExitCode}; starting compatibility probe",
+            )
+
+            var recovered = false
+
+            // First try the least invasive workaround: keep native-offload but
+            // disable PRoot's seccomp acceleration.
+            if (!forceNoSeccomp) {
+                val probe = attempt(
+                    commandToRun = "true",
+                    noSeccomp = true,
+                    nativeOffload = nativeOffload,
+                    callback = null,
+                )
+                if (!isSandboxFatal(probe) && probe.exitCode == 0) {
+                    AgentSandboxCompatibility.rememberNoSeccomp(
+                        appContext,
+                        "$signal probe passed",
+                    )
+                    forceNoSeccomp = true
+                    recovered = true
+                    recoveryNote =
+                        "[Sandbox auto-recovery] PRoot crashed with $signal. " +
+                        "OpenMinis enabled PROOT_NO_SECCOMP=1 and a clean probe passed. " +
+                        "The interrupted command was not rerun automatically to avoid duplicate side effects; retry it once."
+                }
+            }
+
+            // If no-seccomp alone is insufficient (or was already active),
+            // fall back to plain PRoot for Agent shell calls only. Other app
+            // native-offload features are intentionally left untouched.
+            if (!recovered && nativeOffload) {
+                val probe = attempt(
+                    commandToRun = "true",
+                    noSeccomp = true,
+                    nativeOffload = false,
+                    callback = null,
+                )
+                if (!isSandboxFatal(probe) && probe.exitCode == 0) {
+                    AgentSandboxCompatibility.rememberPlainProot(
+                        appContext,
+                        "$signal persisted with native-offload enabled; plain PRoot probe passed",
+                    )
+                    forceNoSeccomp = true
+                    nativeOffload = false
+                    recovered = true
+                    recoveryNote =
+                        "[Sandbox auto-recovery] PRoot crashed with $signal. " +
+                        "OpenMinis switched Agent shell execution to compatibility mode " +
+                        "(PROOT_NO_SECCOMP=1, native-offload disabled) and a clean probe passed. " +
+                        "The interrupted command was not rerun automatically to avoid duplicate side effects; retry it once."
+                }
+            }
+
+            if (!recovered) {
+                // Remember the strongest compatibility settings so the next
+                // tool call at least does not repeat the known-crashing path.
+                AgentSandboxCompatibility.rememberPlainProot(
+                    appContext,
+                    "$signal recovery probes did not pass",
+                )
+                recoveryNote =
+                    "[Sandbox auto-recovery] PRoot crashed with $signal. " +
+                    "OpenMinis enabled the strongest Agent compatibility mode, but the recovery probe still failed. " +
+                    "The interrupted command was not rerun."
+            }
+        }
+
+        var rawOutput = current.output
+        val exitCode = current.exitCode
+        if (recoveryNote != null) {
+            rawOutput = if (rawOutput.isBlank()) recoveryNote
+            else "$rawOutput\n$recoveryNote"
+        }
+
         val durationMs = System.currentTimeMillis() - startTime
         val sanitized = TerminalSanitizer.sanitize(rawOutput)
         val truncated = TerminalSanitizer.truncateIfNeeded(sanitized)
