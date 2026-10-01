@@ -69,12 +69,12 @@ jobs:
           mkdir -p src/android/app/libs
           cp deps/build/rclone/rclone.aar src/android/app/libs/rclone.aar
 
-      - name: Build 1.14 dev APK
+      - name: Test and build 1.14 dev APK
         shell: bash
         working-directory: src/android
         run: |
           chmod +x gradlew
-          ./gradlew --no-daemon :app:assembleDebug
+          ./gradlew --no-daemon :app:testDebugUnitTest :app:assembleDebug
 
       - name: Inspect APK identity
         shell: bash
