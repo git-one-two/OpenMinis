@@ -45,6 +45,7 @@ internal class FreshProcessShell(
     private val sessionBindMounts: Map<String, String>,
     private val useNoSeccomp: Boolean = false,
     private val useNativeOffload: Boolean = true,
+    private val useFakeNetlink: Boolean = true,
 ) {
 
     /**
@@ -284,10 +285,11 @@ internal class FreshProcessShell(
         if (useNativeOffload && handlers.isNotEmpty()) {
             cmd.add("--native-offload=${NativeOffloadServer.socketName}:${handlers.joinToString(",")}")
         }
-        // [T-android-fake-netlink] Same rtnetlink emulation the pooled shell
-        // gets; the two paths must not disagree about whether the sandbox has
-        // network interfaces.
-        cmd.add("--fake-netlink")
+        // Keep the custom rtnetlink extension out of conservative Agent mode.
+        // It remains enabled for upstream/default execution paths.
+        if (useFakeNetlink) {
+            cmd.add("--fake-netlink")
+        }
         // [T-android-shell-fresh-process] Step 4: run the command as its own
         // process-group leader. No marker, no pgid reporting — the host does
         // not need to LEARN the group, because on the fresh path the guest
