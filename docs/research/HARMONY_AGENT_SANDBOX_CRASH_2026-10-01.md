@@ -52,3 +52,16 @@ For the Agent fresh-process path only:
 ## Validation gate
 
 A green CI build is necessary but not sufficient. Final acceptance requires the real device to repeat the previously failing class of long Agent task and pass sustained fork/exec stress without Bus error, SIGSEGV, PRoot assertion, or a wedged Agent.
+
+
+## Known-good historical comparison point
+
+The older Codex-fixed dev branch `fix/android-proot-native-offload`, which the user ran successfully before the 1.14 upgrade, pins:
+
+`OpenMinis/proot@8cf13e997cdc9472997aae19df8050c073c9a86c`
+
+The 1.14 branch pins:
+
+`OpenMinis/proot@1b444ee1cb2f4896c08166e9a12c905af5416f1c`
+
+The old app also defaulted native-offload OFF and predates the newer fake-netlink work. If the application-layer hf2 safe mode still fails on the real device, the next controlled A/B is to keep the 1.14 app layer but temporarily pin PRoot back to `8cf13e9`. That separates "new PRoot fork regression" from "Harmony kernel + all PRoot versions" without discarding the rest of 1.14.
