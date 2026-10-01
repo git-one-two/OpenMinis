@@ -44,7 +44,23 @@ internal class FreshProcessShell(
     private val sessionId: String,
     private val sessionBindMounts: Map<String, String>,
     private val useNoSeccomp: Boolean = false,
+    private val useNativeOffload: Boolean = true,
 ) {
+
+    /**
+     * Whether the guest command wrote its authoritative status file.
+     * If false and [lastProcessExitCode] is a fatal signal, PRoot itself died
+     * before the wrapper could complete; that is a sandbox failure, not a
+     * user command returning the same numeric exit status.
+     */
+    @Volatile
+    var commandExitRecorded: Boolean = false
+        private set
+
+    /** Host PRoot process exit status, when it actually exited. */
+    @Volatile
+    var lastProcessExitCode: Int? = null
+        private set
 
     /**
      * Run [command] to completion.
@@ -265,7 +281,7 @@ internal class FreshProcessShell(
             cmd.add("-b"); cmd.add("$hostPath:$linuxPath")
         }
         val handlers = NativeOffloadServer.registeredHandlers
-        if (handlers.isNotEmpty()) {
+        if (useNativeOffload && handlers.isNotEmpty()) {
             cmd.add("--native-offload=${NativeOffloadServer.socketName}:${handlers.joinToString(",")}")
         }
         // [T-android-fake-netlink] Same rtnetlink emulation the pooled shell
@@ -355,12 +371,22 @@ internal class FreshProcessShell(
      * tracer dies — so it is neither waited on nor killed.
      */
     private fun resolveExitCode(process: Process, statusFile: File, closedOnStatus: Boolean): Int {
-        if (closedOnStatus) return readStatus(statusFile) ?: 0
+        val recordedExit = readStatus(statusFile)
+        commandExitRecorded = recordedExit != null
+
+        if (closedOnStatus) {
+            // The command finished and its status file is authoritative; proot
+            // may intentionally remain alive while tracing a detached daemon.
+            lastProcessExitCode = null
+            return recordedExit ?: 0
+        }
+
         val exited = runCatching {
             process.waitFor(REAP_GRACE_MS, java.util.concurrent.TimeUnit.MILLISECONDS)
         }.getOrDefault(false)
         val processExit = if (exited) runCatching { process.exitValue() }.getOrNull() else null
-        return readStatus(statusFile) ?: processExit ?: 0
+        lastProcessExitCode = processExit
+        return recordedExit ?: processExit ?: 0
     }
 
     /** The runner's recorded exit status, or null when it never wrote one. */
