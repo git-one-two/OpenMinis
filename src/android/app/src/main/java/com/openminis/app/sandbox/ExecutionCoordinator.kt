@@ -136,9 +136,12 @@ object ExecutionCoordinator {
         // no-output fatal signal is safe to rerun because the guest command
         // never got far enough to have observable side effects.
         val firstDurationMs = System.currentTimeMillis() - startTime
+        val firstFatalExit =
+            AgentSandboxCompatibility.normalizeSignalExit(current.processExitCode) ?: current.exitCode
         if (!forceNoSeccomp &&
+            isSandboxFatal(current) &&
             SeccompFallbackPolicy.shouldRetryWithoutSeccomp(
-                exitCode = current.exitCode,
+                exitCode = firstFatalExit,
                 durationMs = firstDurationMs,
                 producedOutput = current.output.isNotEmpty(),
                 alreadyRetried = false,
@@ -147,7 +150,7 @@ object ExecutionCoordinator {
             com.openminis.app.logging.AppLogger.warning(
                 TAG,
                 SeccompFallbackPolicy.retryLogLine(
-                    current.exitCode,
+                    firstFatalExit,
                     firstDurationMs,
                     "fresh shell command",
                 ),
