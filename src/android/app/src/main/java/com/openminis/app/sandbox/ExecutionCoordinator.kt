@@ -84,6 +84,7 @@ object ExecutionCoordinator {
             noSeccomp: Boolean,
             nativeOffload: Boolean,
             callback: ((String) -> Unit)?,
+            timeoutToUse: Long = timeout,
         ): AttemptResult {
             val shell = FreshProcessShell(
                 context = appContext,
@@ -98,7 +99,7 @@ object ExecutionCoordinator {
             return try {
                 val (output, exitCode) = shell.execute(
                     command = commandToRun,
-                    timeout = timeout,
+                    timeout = timeoutToUse,
                     envVars = envVars,
                     lineCallback = callback,
                 )
@@ -167,6 +168,8 @@ object ExecutionCoordinator {
         }
 
         var recoveryNote: String? = null
+        val recoveryProbe = "apk --version >/dev/null 2>&1"
+        val recoveryProbeTimeout = minOf(timeout, 5_000L)
 
         // A status-file-less fatal exit means PRoot itself died. This is
         // categorically different from a user program returning 139: the
@@ -188,10 +191,11 @@ object ExecutionCoordinator {
             // disable PRoot's seccomp acceleration.
             if (!forceNoSeccomp) {
                 val probe = attempt(
-                    commandToRun = "true",
+                    commandToRun = recoveryProbe,
                     noSeccomp = true,
                     nativeOffload = nativeOffload,
                     callback = null,
+                    timeoutToUse = recoveryProbeTimeout,
                 )
                 if (!isSandboxFatal(probe) && probe.exitCode == 0) {
                     AgentSandboxCompatibility.rememberNoSeccomp(
@@ -212,10 +216,11 @@ object ExecutionCoordinator {
             // native-offload features are intentionally left untouched.
             if (!recovered && nativeOffload) {
                 val probe = attempt(
-                    commandToRun = "true",
+                    commandToRun = recoveryProbe,
                     noSeccomp = true,
                     nativeOffload = false,
                     callback = null,
+                    timeoutToUse = recoveryProbeTimeout,
                 )
                 if (!isSandboxFatal(probe) && probe.exitCode == 0) {
                     AgentSandboxCompatibility.rememberPlainProot(
