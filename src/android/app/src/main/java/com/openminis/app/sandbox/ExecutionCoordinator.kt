@@ -83,6 +83,7 @@ object ExecutionCoordinator {
             commandToRun: String,
             noSeccomp: Boolean,
             nativeOffload: Boolean,
+            fakeNetlink: Boolean,
             callback: ((String) -> Unit)?,
             timeoutToUse: Long = timeout,
         ): AttemptResult {
@@ -92,6 +93,7 @@ object ExecutionCoordinator {
                 sessionBindMounts = bindMounts,
                 useNoSeccomp = noSeccomp,
                 useNativeOffload = nativeOffload,
+                useFakeNetlink = fakeNetlink,
             )
             freshShells.compute(sessionId) { _, existing ->
                 (existing ?: newFreshShellSet()).also { it.add(shell) }
@@ -123,12 +125,22 @@ object ExecutionCoordinator {
                 processExitCode = result.processExitCode,
             )
 
+        fun isSuspiciousSandboxFailure(result: AttemptResult): Boolean =
+            AgentSandboxCompatibility.isSuspiciousSandboxFailure(
+                commandExitRecorded = result.commandExitRecorded,
+                processExitCode = result.processExitCode,
+                commandExitCode = result.exitCode,
+                output = result.output,
+            )
+
         var forceNoSeccomp = AgentSandboxCompatibility.forceNoSeccomp(appContext)
         var nativeOffload = AgentSandboxCompatibility.nativeOffloadEnabled(appContext)
+        var fakeNetlink = AgentSandboxCompatibility.fakeNetlinkEnabled(appContext)
         var current = attempt(
             commandToRun = command,
             noSeccomp = forceNoSeccomp,
             nativeOffload = nativeOffload,
+            fakeNetlink = fakeNetlink,
             callback = lineCallback,
         )
 
@@ -159,6 +171,7 @@ object ExecutionCoordinator {
                 commandToRun = command,
                 noSeccomp = true,
                 nativeOffload = nativeOffload,
+                fakeNetlink = fakeNetlink,
                 callback = lineCallback,
             )
             forceNoSeccomp = true
@@ -171,87 +184,91 @@ object ExecutionCoordinator {
         }
 
         var recoveryNote: String? = null
-        val recoveryProbe = "apk --version >/dev/null 2>&1"
+        // Exercise the exact unstable fork/exec path several times. A single
+        // /bin/true can pass by chance on the affected HarmonyOS device.
+        val recoveryProbe =
+            "for i in 1 2 3 4 5 6 7 8; do /bin/true || exit $?; done; " +
+                "apk --version >/dev/null 2>&1"
         val recoveryProbeTimeout = minOf(timeout, 5_000L)
 
-        // A status-file-less fatal exit means PRoot itself died. This is
-        // categorically different from a user program returning 139: the
-        // wrapper never recorded a command exit. Do NOT blindly rerun an
-        // arbitrary command here because it may already have had side effects.
-        // Instead probe the sandbox with the side-effect-free `true`, persist
-        // the working compatibility mode, and tell the Agent to retry once.
-        if (isSandboxFatal(current)) {
-            val signal = AgentSandboxCompatibility.signalName(current.processExitCode)
+        // Field evidence has two classes: PRoot itself dying, and ordinary
+        // external binaries randomly receiving SIGBUS/SIGSEGV while builtins
+        // remain stable. Both justify a side-effect-free compatibility probe,
+        // but never an automatic replay of the interrupted user command.
+        if (isSuspiciousSandboxFailure(current)) {
+            val signal = AgentSandboxCompatibility.signalName(
+                current.processExitCode,
+                current.output,
+            )
             com.openminis.app.logging.AppLogger.error(
                 TAG,
-                "[$sessionId] Agent PRoot crashed with $signal " +
-                    "processExit=${current.processExitCode}; starting compatibility probe",
+                "[$sessionId] Agent sandbox instability detected: $signal " +
+                    "processExit=${current.processExitCode} commandExit=${current.exitCode}; " +
+                    "starting compatibility probe",
             )
 
             var recovered = false
 
-            // First try the least invasive workaround: keep native-offload but
-            // disable PRoot's seccomp acceleration.
+            // Least invasive fallback for release/upstream-style defaults.
             if (!forceNoSeccomp) {
                 val probe = attempt(
                     commandToRun = recoveryProbe,
                     noSeccomp = true,
                     nativeOffload = nativeOffload,
+                    fakeNetlink = fakeNetlink,
                     callback = null,
                     timeoutToUse = recoveryProbeTimeout,
                 )
-                if (!isSandboxFatal(probe) && probe.exitCode == 0) {
+                if (!isSuspiciousSandboxFailure(probe) && probe.exitCode == 0) {
                     AgentSandboxCompatibility.rememberNoSeccomp(
                         appContext,
-                        "$signal probe passed",
+                        "$signal stress probe passed",
                     )
                     forceNoSeccomp = true
                     recovered = true
                     recoveryNote =
-                        "[Sandbox auto-recovery] PRoot crashed with $signal. " +
-                        "OpenMinis enabled PROOT_NO_SECCOMP=1 and a clean probe passed. " +
-                        "The interrupted command was not rerun automatically to avoid duplicate side effects; retry it once."
+                        "[Sandbox auto-recovery] $signal detected. " +
+                        "OpenMinis enabled PROOT_NO_SECCOMP=1 and an 8x fork/exec stress probe passed. " +
+                        "The interrupted command was not replayed automatically; retry it once."
                 }
             }
 
-            // If no-seccomp alone is insufficient (or was already active),
-            // fall back to plain PRoot for Agent shell calls only. Other app
-            // native-offload features are intentionally left untouched.
-            if (!recovered && nativeOffload) {
+            // Strong mode strips the two custom ptrace extensions implicated by
+            // the device report and serializes future Agent PRoot instances.
+            if (!recovered) {
                 val probe = attempt(
                     commandToRun = recoveryProbe,
                     noSeccomp = true,
                     nativeOffload = false,
+                    fakeNetlink = false,
                     callback = null,
                     timeoutToUse = recoveryProbeTimeout,
                 )
-                if (!isSandboxFatal(probe) && probe.exitCode == 0) {
-                    AgentSandboxCompatibility.rememberPlainProot(
+                if (!isSuspiciousSandboxFailure(probe) && probe.exitCode == 0) {
+                    AgentSandboxCompatibility.rememberStrongMode(
                         appContext,
-                        "$signal persisted with native-offload enabled; plain PRoot probe passed",
+                        "$signal strong-mode stress probe passed",
                     )
                     forceNoSeccomp = true
                     nativeOffload = false
+                    fakeNetlink = false
                     recovered = true
                     recoveryNote =
-                        "[Sandbox auto-recovery] PRoot crashed with $signal. " +
-                        "OpenMinis switched Agent shell execution to compatibility mode " +
-                        "(PROOT_NO_SECCOMP=1, native-offload disabled) and a clean probe passed. " +
-                        "The interrupted command was not rerun automatically to avoid duplicate side effects; retry it once."
+                        "[Sandbox auto-recovery] $signal detected. " +
+                        "OpenMinis confirmed strong Agent compatibility mode " +
+                        "(no-seccomp, native-offload off, fake-netlink off, serialized execution) " +
+                        "with an 8x fork/exec stress probe. Retry the interrupted command once."
                 }
             }
 
             if (!recovered) {
-                // Remember the strongest compatibility settings so the next
-                // tool call at least does not repeat the known-crashing path.
-                AgentSandboxCompatibility.rememberPlainProot(
+                AgentSandboxCompatibility.rememberStrongMode(
                     appContext,
-                    "$signal recovery probes did not pass",
+                    "$signal strong-mode stress probe failed",
                 )
                 recoveryNote =
-                    "[Sandbox auto-recovery] PRoot crashed with $signal. " +
-                    "OpenMinis enabled the strongest Agent compatibility mode, but the recovery probe still failed. " +
-                    "The interrupted command was not rerun."
+                    "[Sandbox auto-recovery] $signal detected. Strong Agent compatibility mode was enabled, " +
+                    "but the fork/exec stress probe still failed. The interrupted command was not replayed."
             }
         }
 
