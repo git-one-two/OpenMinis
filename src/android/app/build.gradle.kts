@@ -36,7 +36,7 @@ android {
         applicationId = "com.openminis.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 28
+        versionCode = 11402
         versionName = "1.14"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -80,7 +80,7 @@ android {
             // Keep the custom debug build installable beside the official app.
             // This preserves the package identity used by the previous dev build.
             applicationIdSuffix = ".dev"
-            versionNameSuffix = "-dev"
+            versionNameSuffix = "-dev-hf2"
             buildConfigField("boolean", "DEV_TOOLS", "true")
         }
         // `perf`: the debug variant minus android:debuggable. ART refuses to
