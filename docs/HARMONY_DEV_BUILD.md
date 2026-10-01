@@ -94,9 +94,9 @@ The installable personal dev APK must be re-signed locally with the existing And
 
 Never commit the keystore or its private key to this repository.
 
-Expected signing certificate SHA-256:
+Expected signing certificate SHA-256 (verified against the original `OpenMinis-final.apk` / `0.20-preview-dev`):
 
-`FF:6F:F7:55:B3:F2:26:D7:FC:EE:DF:93:CA:C1:89:85:03:FC:A8:2F:E1:B6:61:5F:86:F2:A9:C7:0E:2B:DB:58`
+`87:58:60:30:A1:61:4B:E8:8A:5F:66:F3:A0:9C:4F:47:67:82:FB:75:5F:6A:F8:1F:22:87:12:6D:12:CF:5D:60`
 
 Before installing an upgrade, verify both:
 
@@ -104,3 +104,19 @@ Before installing an upgrade, verify both:
 2. installed app certificate matches the expected SHA-256 certificate
 
 Only then perform an in-place update.
+
+
+## Agent sandbox self-healing (post-1.14 field fix)
+
+A real HarmonyOS long-running Agent task exposed a gap that simple shell smoke tests did not catch: the Agent's default `FreshProcessShell` can lose the PRoot host process to SIGSEGV/SIGBUS after startup, while the upstream 1.14 seccomp fallback only covers early, no-output crashes.
+
+The custom branch therefore adds Agent-scoped runtime recovery:
+
+1. Distinguish a PRoot crash from a guest program returning the same numeric exit code using the fresh-process status file.
+2. Run a side-effect-free, 5-second `apk --version` recovery probe.
+3. Prefer `PROOT_NO_SECCOMP=1` when that alone is sufficient.
+4. If PRoot still dies, disable native-offload for Agent shell execution only and keep no-seccomp enabled.
+5. Persist the working compatibility mode for later Agent commands and app restarts.
+6. Do not automatically replay the interrupted user command after a late crash, because it may already have caused side effects; return a recovery notice so the Agent retries once on the now-stable sandbox.
+
+Terminal and other native-offload integrations remain on the normal OpenMinis 1.14 path.
