@@ -1,3 +1,5 @@
+> ChatGPT 源码复核更正（2026-10-02）：HF5 未修复的判分不变。下文 §2 把日志 sysnum=61 当作 ARM64 Linux getdents64 的解释错误：日志使用 get_sysnum() 返回的 PRoot neutral enum，syscall/sysnums.list 第61项为 PR_execve。kernel-exec 位于 execve sysexit，调用者PC在ld-musl并不能证明getdents64或动态链接器寄存器损坏。retry-register 聚合errno=22也不足以确认具体ptrace request/内核拒绝原因。原始JSON中user182为37个182+3个-9（不是39+3）；缺的3次写入只能证明启动失败，不是用户写完后的退出码被吞。原判读保留作历史，修复方向见 docs/research/HARMONY_HF6_LEGACY_BASELINE_2026-10-02.md。
+
 # hf5-device 真机复测判读（2026-10-02，400 样本 + 40×3 侧例）
 
 前置：`docs/research/HARMONY_EXIT182_ROOTCAUSE_AND_FIX_2026-10-02.md`（根因定案）、`docs/research/hf3-device/`、`docs/research/hf4-device/`（两轮未修好）。
