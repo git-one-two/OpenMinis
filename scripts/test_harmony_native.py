@@ -39,7 +39,13 @@ with tempfile.TemporaryDirectory(prefix='harmony-native-') as directory:
         return;
     }
 '''
-    helper.write_text(code.replace(anchor, injection + anchor))
+    code = code.replace(anchor, injection + anchor)
+    code = code.replace('    tracee->harmony_loader.initial_sp = initial_sp;', '''    tracee->harmony_loader.initial_sp = initial_sp;
+    note(tracee, WARNING, INTERNAL, "[TEST-ARM] raw=%s range=%lx..%lx eligible=%d",
+         tracee->load_info->raw_path,
+         tracee->harmony_loader.text_start, tracee->harmony_loader.text_end,
+         recovery_enabled(tracee));''')
+    helper.write_text(code)
     filter_path = source / 'src/syscall/seccomp.c'
     filters = filter_path.read_text()
     # mmap is normally not intercepted. Only this test build adds its stop.
@@ -101,4 +107,6 @@ print(json.dumps({'rows': rows, 'writes': pathlib.Path(marker).read_text() if pa
                 results.append(item)
                 output.write_text(json.dumps(results, ensure_ascii=False, indent=2))
                 print(json.dumps({k: v for k, v in item.items() if k not in ('rows', 'stderr')}, ensure_ascii=False), flush=True)
+                if not item['passed']:
+                    print(item['stderr'], flush=True)
 assert all(item['passed'] for item in results), 'real native recovery integration failed'
