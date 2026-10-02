@@ -87,6 +87,8 @@ for pid in pathlib.Path("/proc").iterdir():
         continue
     if apk_hashes:
         break
+expected_proot_sha256 = "b94022ea3374f38714bb7e023d51a3693d444d51fd4eccd6c2a5a52bd8f085ba"
+checks["hf5_native_installed"] = apk_hashes.get("lib/arm64-v8a/libproot.so") == expected_proot_sha256
 report = {"flags": flags, "samples": args.samples, "external_exit_counts": dict(counts),
           "writes": len(writes), "checks": checks, "passed": all(checks.values()),
           "apk_hashes": apk_hashes, "rows": rows}
