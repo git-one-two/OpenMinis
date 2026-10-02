@@ -45,6 +45,12 @@ with tempfile.TemporaryDirectory(prefix='harmony-native-') as directory:
          tracee->load_info->raw_path,
          tracee->harmony_loader.text_start, tracee->harmony_loader.text_end,
          recovery_enabled(tracee));''')
+    code = code.replace('    if (!tracee->harmony_loader.active || !recovery_enabled(tracee))', '''    if (getenv("MINIS_TEST_FAULT_TARGET") != NULL && tracee->load_info != NULL
+        && strcmp(tracee->load_info->raw_path, getenv("MINIS_TEST_FAULT_TARGET")) == 0)
+        note(tracee, WARNING, INTERNAL, "[TEST-ENTER] pc=%lx number=%s active=%d",
+             peek_reg(tracee, CURRENT, INSTR_POINTER), stringify_sysnum(get_sysnum(tracee, CURRENT)),
+             tracee->harmony_loader.active);
+    if (!tracee->harmony_loader.active || !recovery_enabled(tracee))''')
     helper.write_text(code)
     filter_path = source / 'src/syscall/seccomp.c'
     filters = filter_path.read_text()
