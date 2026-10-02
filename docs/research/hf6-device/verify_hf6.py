@@ -15,12 +15,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--samples", type=int, default=200)
 parser.add_argument("--output", default="/var/minis/shared/work/OpenMinis-investigation/VERIFY_2026-10-02_hf6.json")
 args = parser.parse_args()
-diagnostic_path = pathlib.Path("/var/minis/shared/work/OpenMinis-investigation/HF6_exec_diag.log")
 started_at = int(time.time())
-try:
-    diagnostic_offset = diagnostic_path.stat().st_size
-except OSError:
-    diagnostic_offset = 0
 if not 1 <= args.samples <= 1000:
     parser.error("--samples must be 1..1000")
 rows = []
@@ -93,20 +88,9 @@ checks["hf6_native_installed"] = apk_hashes.get("lib/arm64-v8a/libproot.so") == 
 report = {"flags": flags, "samples": args.samples, "external_exit_counts": dict(counts),
           "writes": len(writes), "checks": checks, "passed": all(checks.values()),
           "apk_hashes": apk_hashes, "rows": rows}
-try:
-    with diagnostic_path.open("rb") as diagnostic:
-        diagnostic.seek(diagnostic_offset)
-        native_log = diagnostic.read(131328).decode("utf-8", errors="replace")
-    diagnostic_error = None
-except OSError as error:
-    native_log = ""
-    diagnostic_error = str(error)
-report["native_diagnostics"] = {
-    "started_at": started_at, "ended_at": int(time.time()),
-    "log": native_log, "read_error": diagnostic_error,
-    "stages": dict(collections.Counter(
-        line.split("stage=", 1)[1].split()[0] for line in native_log.splitlines() if "stage=" in line)),
-}
+report["baseline"] = "August APK paired PRoot/loaders; no HF5 native recovery"
+report["started_at"] = started_at
+report["ended_at"] = int(time.time())
 output = pathlib.Path(args.output)
 output.parent.mkdir(parents=True, exist_ok=True)
 output.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
