@@ -28,8 +28,7 @@ class LoaderStartupRetryPolicyTest {
     }
 
     private fun runMarked(command: String, statusPath: String): Pair<Int, String> {
-        val proc = ProcessBuilder("/bin/sh", "-c",
-            ForegroundCommandGroup.markCommandStart(command, statusPath))
+        val proc = ProcessBuilder(ForegroundCommandGroup.wrapForFreshProcess(command, statusPath))
             .redirectErrorStream(true).start()
         assertTrue(proc.waitFor(5, TimeUnit.SECONDS))
         return proc.exitValue() to proc.inputStream.bufferedReader().readText()

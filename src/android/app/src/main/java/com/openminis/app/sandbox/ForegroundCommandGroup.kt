@@ -140,16 +140,17 @@ internal object ForegroundCommandGroup {
      * the runner — so nothing in either is ever re-parsed by a shell.
      */
     fun wrapForFreshProcess(command: String, statusPath: String): List<String> =
-        listOf(SETSID, "/bin/sh", "-c", FRESH_RUNNER, "sh", markCommandStart(command, statusPath), statusPath)
+        listOf(SETSID, "/bin/sh", "-c", FRESH_RUNNER, "sh", command, statusPath, markCommandStart("", statusPath))
 
     /**
      * [T-android-fresh-exit-status-file] See [wrapForFreshProcess]. `$1` is the
-     * command, `$2` the status path. The inner `/bin/sh -c "$1"` means an
+     * command, `$2` the status path and `$3` a fixed startup prefix. The inner
+     * `/bin/sh -c "$3$1"` means an
      * `exit N` in the command ends only the command, and the status is still
      * written; a command killed by a signal reports 128+N, as a shell would.
      */
     const val FRESH_RUNNER =
-        "printf '%s' \"\$\$\" > \"\$2.pid\"; /bin/sh -c \"\$1\"; rc=\$?; printf '%s' \"\$rc\" > \"\$2\"; exit \$rc"
+        "printf '%s' \"\$\$\" > \"\$2.pid\"; /bin/sh -c \"\$3\$1\"; rc=\$?; printf '%s' \"\$rc\" > \"\$2\"; exit \$rc"
 
     /**
      * The INNER command shell must load and write this marker before evaluating

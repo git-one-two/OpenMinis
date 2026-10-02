@@ -128,7 +128,8 @@ class Review0923SandboxEdgeTest {
         val nasty = "echo 'a&b' \"\$HOME\" ; curl 'x?a=1&b=2' & wait\n# trailing comment"
         val argv = ForegroundCommandGroup.wrapForFreshProcess(nasty, "/.minis-exit/t")
         assertEquals(
-            listOf(ForegroundCommandGroup.SETSID, "/bin/sh", "-c", ForegroundCommandGroup.FRESH_RUNNER, "sh", nasty, "/.minis-exit/t"),
+            listOf(ForegroundCommandGroup.SETSID, "/bin/sh", "-c", ForegroundCommandGroup.FRESH_RUNNER, "sh", nasty, "/.minis-exit/t",
+                ForegroundCommandGroup.markCommandStart("", "/.minis-exit/t")),
             argv,
         )
     }

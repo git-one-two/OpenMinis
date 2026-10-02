@@ -325,7 +325,10 @@ class ShellExecutionStrategyTest {
         // from the runner's status file, and a still-running proot is left
         // alone — neither waited on nor killed.
         val body = freshSrc.substringAfter("private fun resolveExitCode(").substringBefore("\n    /**")
-        assertTrue(body.contains("if (closedOnStatus) return readStatus(statusFile)"))
+        val completed = body.substringAfter("if (closedOnStatus) {")
+            .substringBefore("val exited =")
+        assertTrue("uses the authoritative guest status", completed.contains("return recordedExit ?: 0"))
+        assertFalse("never waits for a daemon's tracer", completed.contains("waitFor("))
         assertFalse(body.contains("killProcessTree"))
         assertFalse(body.contains("destroyForcibly"))
     }
