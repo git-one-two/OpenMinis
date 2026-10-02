@@ -76,10 +76,11 @@ print(json.dumps({'rows': rows, 'writes': pathlib.Path(marker).read_text() if pa
         for faults in (0, 1, 3, 4):
             for case, target in (('true', '/bin/true'), ('shebang', str(script)), ('user182', '/bin/sh')):
                 marker = directory / ('marker-' + str(no_seccomp) + '-' + str(faults) + '-' + case)
+                diagnostic = marker.with_suffix('.diag')
                 env = os.environ.copy()
                 env.update(PROOT_LOADER=str(copied_loader), PROOT_VERIFY_REGSET='1',
                            PROOT_EXEC_LOADER_RETRY='1', MINIS_TEST_FAULT_TARGET=target,
-                           MINIS_TEST_FAULT_COUNT=str(faults))
+                           MINIS_TEST_FAULT_COUNT=str(faults), PROOT_EXEC_DIAG_FILE=str(diagnostic))
                 if no_seccomp:
                     env['PROOT_NO_SECCOMP'] = '1'
                 else:
@@ -88,6 +89,9 @@ print(json.dumps({'rows': rows, 'writes': pathlib.Path(marker).read_text() if pa
                                      env=env, capture_output=True, text=True, timeout=100)
                 item = {'no_seccomp': no_seccomp, 'faults': faults, 'case': case,
                         'exit': run.returncode, 'stderr': run.stderr[-12000:]}
+                native_diagnostic = diagnostic.read_text() if diagnostic.exists() else ''
+                item['diagnostic_retry_starts'] = native_diagnostic.count('stage=retry-start ')
+                item['diagnostic_failures'] = native_diagnostic.count('stage=retry-failed ')
                 try:
                     item.update(json.loads(run.stdout))
                 except ValueError:
@@ -99,7 +103,9 @@ print(json.dumps({'rows': rows, 'writes': pathlib.Path(marker).read_text() if pa
                     and all(row.get('exit') == expected and row.get('stdout') == expected_output
                             for row in item.get('rows', []))
                     and item.get('writes') == expected_writes
-                    and run.stderr.count('[TEST-FAULT]') == min(faults, 4) * 10)
+                    and run.stderr.count('[TEST-FAULT]') == min(faults, 4) * 10
+                    and item['diagnostic_retry_starts'] == min(faults, 3) * 10
+                    and item['diagnostic_failures'] == 0)
                 results.append(item)
                 output.write_text(json.dumps(results, ensure_ascii=False, indent=2))
                 print(json.dumps({k: v for k, v in item.items() if k not in ('rows', 'stderr')}, ensure_ascii=False), flush=True)
