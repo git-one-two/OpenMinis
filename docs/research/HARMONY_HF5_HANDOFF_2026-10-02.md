@@ -8,7 +8,8 @@
 不能据此声称用户代码被重放；退出码与写入次数验收均失败。
 
 ## hf5 改动
-源代码 commit 63f94e960bd2b4a11f2d7b81f860e03b401ba69b，APK versionCode=11405。
+恢复与诊断代码 commit 63f94e960bd2b4a11f2d7b81f860e03b401ba69b。
+最终版本标识修正 commit 151bfa841e19e8d7c518fdb7262d837420d99c45，APK versionCode=11405、versionName=1.14-dev-hf5。
 - 改写 loader EXIT 为 EXEC 时，要求 PTRACE_SYSCALL 返回阶段，维持 sysexit_pending。
 - ARM64 seccomp 过滤增加 exit 停止点，使恢复入口在加速模式也可观察。
 - loader hook 移到 restore_original_regs=false 之后；保留 ORIGINAL 快照会清掉的 dirty 标记，避免寄存器修改不写回。
@@ -21,7 +22,7 @@
 
 ## 实际验证
 原生 ARM64 Linux CI 使用完整 PRoot 和 APK 的 pinned loader，非 mock/非QEMU。
-run 36988594045 成功，共24组240个子进程：
+run 36989650866 成功，共24组240个子进程，含诊断文件真实写入验证：
 seccomp 开/关 × 故障0/1/3/4次 × true/shebang/user182。
 故障由临时测试源码故意改写 loader mmap 参数产生；负面对照必须真正命中故障才通过。
 1或3次故障后恢复；4次故障超过最多3次重试后保留182。
