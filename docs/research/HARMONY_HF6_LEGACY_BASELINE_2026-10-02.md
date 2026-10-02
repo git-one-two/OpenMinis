@@ -28,3 +28,11 @@ Linux测试使用旧source重新编译，不能冒充原Android二进制或Huawe
 上传VERIFY_2026-10-02_hf6.json到docs/research/hf6-device/，不改代码。
 需400/400 true、40/40shebang、40次用户182且恰好40次写入、参数与父进程正常、旧proot和loader哈希匹配。
 任何一项失败都不判为修好；通过后还需真实开发任务验收。
+
+## 对照结果与最终源码
+PRoot 8cf13e99 到 1b444ee1 共10条提交，差异未修改 tracee/reg.c、tracee/mem.c、syscall/syscall.c、execve/exit.c 或 loader/loader.c。
+APK loader 则确实不同；直接复用旧组件对照比继续假定内核根因更有辨别力。
+ARM64 Linux CI 36995425310 成功：seccomp开/关各400 true、40 shebang、40用户182，共960个子程序。
+参数与写入次数全通过。此检查验证旧source/loader协议，不代表Huawei通过。
+HF6最终应用源码4ff6333a1ac88ccf3142798e1b2a8e2b21dad02d；最终构建CI36996013892。
+关闭offload时停止其服务，清理先前版本生成的精确 no-op 占位脚本，避免手机专属命令假成功；普通用户脚本不符合该内容时不清理。
