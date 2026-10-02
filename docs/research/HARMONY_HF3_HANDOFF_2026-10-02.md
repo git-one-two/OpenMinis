@@ -2,8 +2,8 @@
 
 ## 当前结论
 
-- 源码分支：`upgrade/openminis-1.14-harmony`，修复提交 `2c0756ed09d8597e9bad4bdf63dba8a5b7985191`。
-- 本轮已修复代码层缺陷，正在执行 CI 的 NDK 构建、沙盒回归测试和 APK 构建。
+- 源码分支：`upgrade/openminis-1.14-harmony`，最终源码提交 `4a8fedf245bb3209e762d9a4aa3b85e12b78824e`（初版修复 `2c0756e`）。
+- 本轮代码层修复已完成；正式 NDK 构建、8 组原生故障注入、沙盒整组回归和 APK 打包均已通过。个人原签名 APK 已产出，证书与原 APK 一致。
 - **未连接到用户手机（adb devices 为空），没有真机修复成功的证据。**
 - 旧报告指向 ptrace/loader 路径，但“华为内核丢失恢复快照”仍需原始现场与对照实验验证；不能由退出码 182 单独证明。
 - 旧交接文档缺少其引用的 §2 现场正文。用户手机共享目录里的原始 v6 日志尚未由本轮读取。
@@ -32,7 +32,12 @@
 - 本轮 C 故障注入测试：8 组通过（正常写回、GPR 首写丢失、syscall 首写丢失、持续丢失、短回读、pstate 归一化、ptrace 错误、错误长度）。
 - 用真实修复 helper 编译运行，启用 AddressSanitizer / UndefinedBehaviorSanitizer。本地执行环境受 ptrace 限制，LeakSanitizer 单独关闭；CI 继续运行默认 sanitizer。
 - Kotlin 用例覆盖：启动 loader 重试预算；Stop/超时/普通退出；无输出但已写入的命令退出 182 不重跑；标记写失败阻止副作用；引号/heredoc/管道语义。
-- CI 运行： https://github.com/git-one-two/OpenMinis/actions/runs/36965604625 （最终结果待构建完成后追加）。
+- 初轮 CI 36965604625：297 项沙盒测试中 3 项失败，暴露原始 argv 传递变化与一个旧的 daemon 断言。
+- 修正后 CI：[36966440269](https://github.com/git-one-two/OpenMinis/actions/runs/36966440269) **success**。完整执行沙盒测试，未排除失败用例；正式 APK 构建与产物检查全部成功。
+- 原命令和启动前缀使用不同 argv；内层 shell 合成执行文本，命令参数不被外层 shell 重新解释。新增副作用/标记失败/heredoc 用例执行整个 FRESH_RUNNER。
+- 原签名 APK：`OpenMinis-1.14-dev-hf3.apk`，66,238,614 bytes，SHA256 `133204b0522686ab8fbcb3c2bbf88869707495a3c8b1417dfeda72c3e6273d2a`。
+- 签名 v2/v3 校验成功，证书与桌面原 `debug.keystore` 和 hf2 一致；已复制至 `C:\Users\admin\Desktop\OpenMinis-1.14-dev-hf3.apk`。
+- APK 内 `libproot.so` 已确认是新原生实现，SHA256 `07f497b1f2b0446e4d85b9e235a8a0eae6566046e4d13077957988a1f9f1db12`。loader64/loader32 与 hf2 逐字节一致。
 - 包身份：`com.openminis.app.dev`，versionCode 11403，versionName `1.14-dev-hf3`。
 - 桌面原 keystore 仅本机用于签名，不写入仓库。预期证书 SHA256：`87586030a1614be88a5f66f3a09c4f476782fb755f6af81f2287126d12cf5d60`。
 
@@ -45,3 +50,18 @@
 5. 开关 `PROOT_VERIFY_REGSET=1/0` 同条件对照；若开启导致更坏行为，先关闭，不据此认定内核修复成功。
 6. 检查取消/超时、普通失败、长输出、文件写入、终端及后台 daemon。随后至少 24h 日常使用。
 7. 若仍存在命令开始后的随机 exec 死亡，继续 loader 分支诊断与 chain 恢复路径；不要扩大成盲目整条命令重试。
+
+## 外部真机验收脚本
+
+仓库提供 `scripts/harmony_device_acceptance.py`：走真实 `debug.shellExecute` / fresh 通道，150 个独立 /bin/true 调用，另测静默写入后退出 182 的单次副作用、普通退出 7、超时和超时后恢复。
+
+连接手机后，在 **PC** 运行（使用已有 adb 路径）：
+
+```powershell
+adb forward tcp:5321 tcp:5321
+python scripts/harmony_device_acceptance.py --samples 150 --output harmony-hf3-acceptance.json
+```
+
+不要从 Agent 的 shell_execute 内运行该脚本：它正在持有全局保守互斥锁，再调 fresh RPC 会等自己，形成死锁。测试期间让 App 保持前台且暂停其他 Agent 任务，避免当前 debug RPC 的全局 strategy 临时切换影响并发调用。
+
+本脚本**尚未真机运行**。有设备连接后应先跑该脚本，再测试原始真实任务与较长时间使用；本轮不得标为整个设备问题已修好。
