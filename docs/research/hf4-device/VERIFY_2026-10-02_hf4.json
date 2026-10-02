@@ -1,0 +1,2881 @@
+{
+  "flags": {
+    "PROOT_EXEC_LOADER_RETRY": "1",
+    "PROOT_VERIFY_REGSET": "1",
+    "PROOT_VERBOSE": null
+  },
+  "samples": 400,
+  "external_exit_counts": {
+    "0": 372,
+    "-9": 28
+  },
+  "writes": 39,
+  "checks": {
+    "retry_environment_enabled": true,
+    "all_nested_true_pass": false,
+    "shebang_argv_preserved": false,
+    "user182_preserved": false,
+    "user_writes_exactly_once": false,
+    "argv_env_preserved": true,
+    "parent_still_alive": true
+  },
+  "passed": false,
+  "apk_hashes": {
+    "lib/arm64-v8a/libproot.so": "aa29de2e337606b2720e3ae990319041fb4e208a2e13281d792cd85c1fe15e93",
+    "lib/arm64-v8a/libproot-loader.so": "44ef39c1e1a18c09f6e4c4b5d6f8bba82d30596598bd155ec162d05c5122ff04"
+  },
+  "rows": [
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": -9,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": -9,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": -9,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": -9,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": -9,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": -9,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": -9,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": -9,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": -9,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": -9,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": -9,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": -9,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": -9,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": -9,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": -9,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": -9,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": -9,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": -9,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": -9,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": -9,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": -9,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": -9,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": -9,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": -9,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": -9,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": -9,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": -9,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": -9,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "nested-true",
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "shebang-argv",
+      "exit": null,
+      "error": "[Errno 14] Bad address: '/tmp/minis-hf4-gfyjmwu3/script.sh'"
+    },
+    {
+      "case": "shebang-argv",
+      "exit": null,
+      "error": "[Errno 14] Bad address: '/tmp/minis-hf4-gfyjmwu3/script.sh'"
+    },
+    {
+      "case": "shebang-argv",
+      "exit": null,
+      "error": "[Errno 14] Bad address: '/tmp/minis-hf4-gfyjmwu3/script.sh'"
+    },
+    {
+      "case": "shebang-argv",
+      "exit": null,
+      "error": "[Errno 14] Bad address: '/tmp/minis-hf4-gfyjmwu3/script.sh'"
+    },
+    {
+      "case": "shebang-argv",
+      "exit": null,
+      "error": "[Errno 14] Bad address: '/tmp/minis-hf4-gfyjmwu3/script.sh'"
+    },
+    {
+      "case": "shebang-argv",
+      "exit": null,
+      "error": "[Errno 14] Bad address: '/tmp/minis-hf4-gfyjmwu3/script.sh'"
+    },
+    {
+      "case": "shebang-argv",
+      "exit": null,
+      "error": "[Errno 14] Bad address: '/tmp/minis-hf4-gfyjmwu3/script.sh'"
+    },
+    {
+      "case": "shebang-argv",
+      "exit": null,
+      "error": "[Errno 14] Bad address: '/tmp/minis-hf4-gfyjmwu3/script.sh'"
+    },
+    {
+      "case": "shebang-argv",
+      "exit": null,
+      "error": "[Errno 14] Bad address: '/tmp/minis-hf4-gfyjmwu3/script.sh'"
+    },
+    {
+      "case": "shebang-argv",
+      "exit": null,
+      "error": "[Errno 14] Bad address: '/tmp/minis-hf4-gfyjmwu3/script.sh'"
+    },
+    {
+      "case": "shebang-argv",
+      "exit": null,
+      "error": "[Errno 14] Bad address: '/tmp/minis-hf4-gfyjmwu3/script.sh'"
+    },
+    {
+      "case": "shebang-argv",
+      "exit": null,
+      "error": "[Errno 14] Bad address: '/tmp/minis-hf4-gfyjmwu3/script.sh'"
+    },
+    {
+      "case": "shebang-argv",
+      "exit": null,
+      "error": "[Errno 14] Bad address: '/tmp/minis-hf4-gfyjmwu3/script.sh'"
+    },
+    {
+      "case": "shebang-argv",
+      "exit": null,
+      "error": "[Errno 14] Bad address: '/tmp/minis-hf4-gfyjmwu3/script.sh'"
+    },
+    {
+      "case": "shebang-argv",
+      "exit": null,
+      "error": "[Errno 14] Bad address: '/tmp/minis-hf4-gfyjmwu3/script.sh'"
+    },
+    {
+      "case": "shebang-argv",
+      "exit": null,
+      "error": "[Errno 14] Bad address: '/tmp/minis-hf4-gfyjmwu3/script.sh'"
+    },
+    {
+      "case": "shebang-argv",
+      "exit": null,
+      "error": "[Errno 14] Bad address: '/tmp/minis-hf4-gfyjmwu3/script.sh'"
+    },
+    {
+      "case": "shebang-argv",
+      "exit": null,
+      "error": "[Errno 14] Bad address: '/tmp/minis-hf4-gfyjmwu3/script.sh'"
+    },
+    {
+      "case": "shebang-argv",
+      "exit": null,
+      "error": "[Errno 14] Bad address: '/tmp/minis-hf4-gfyjmwu3/script.sh'"
+    },
+    {
+      "case": "shebang-argv",
+      "exit": null,
+      "error": "[Errno 14] Bad address: '/tmp/minis-hf4-gfyjmwu3/script.sh'"
+    },
+    {
+      "case": "shebang-argv",
+      "exit": null,
+      "error": "[Errno 14] Bad address: '/tmp/minis-hf4-gfyjmwu3/script.sh'"
+    },
+    {
+      "case": "shebang-argv",
+      "exit": null,
+      "error": "[Errno 14] Bad address: '/tmp/minis-hf4-gfyjmwu3/script.sh'"
+    },
+    {
+      "case": "shebang-argv",
+      "exit": null,
+      "error": "[Errno 14] Bad address: '/tmp/minis-hf4-gfyjmwu3/script.sh'"
+    },
+    {
+      "case": "shebang-argv",
+      "exit": null,
+      "error": "[Errno 14] Bad address: '/tmp/minis-hf4-gfyjmwu3/script.sh'"
+    },
+    {
+      "case": "shebang-argv",
+      "exit": null,
+      "error": "[Errno 14] Bad address: '/tmp/minis-hf4-gfyjmwu3/script.sh'"
+    },
+    {
+      "case": "shebang-argv",
+      "exit": null,
+      "error": "[Errno 14] Bad address: '/tmp/minis-hf4-gfyjmwu3/script.sh'"
+    },
+    {
+      "case": "shebang-argv",
+      "exit": null,
+      "error": "[Errno 14] Bad address: '/tmp/minis-hf4-gfyjmwu3/script.sh'"
+    },
+    {
+      "case": "shebang-argv",
+      "exit": null,
+      "error": "[Errno 14] Bad address: '/tmp/minis-hf4-gfyjmwu3/script.sh'"
+    },
+    {
+      "case": "shebang-argv",
+      "exit": null,
+      "error": "[Errno 14] Bad address: '/tmp/minis-hf4-gfyjmwu3/script.sh'"
+    },
+    {
+      "case": "shebang-argv",
+      "exit": null,
+      "error": "[Errno 14] Bad address: '/tmp/minis-hf4-gfyjmwu3/script.sh'"
+    },
+    {
+      "case": "shebang-argv",
+      "exit": null,
+      "error": "[Errno 14] Bad address: '/tmp/minis-hf4-gfyjmwu3/script.sh'"
+    },
+    {
+      "case": "shebang-argv",
+      "exit": null,
+      "error": "[Errno 14] Bad address: '/tmp/minis-hf4-gfyjmwu3/script.sh'"
+    },
+    {
+      "case": "shebang-argv",
+      "exit": null,
+      "error": "[Errno 14] Bad address: '/tmp/minis-hf4-gfyjmwu3/script.sh'"
+    },
+    {
+      "case": "shebang-argv",
+      "exit": null,
+      "error": "[Errno 14] Bad address: '/tmp/minis-hf4-gfyjmwu3/script.sh'"
+    },
+    {
+      "case": "shebang-argv",
+      "exit": null,
+      "error": "[Errno 14] Bad address: '/tmp/minis-hf4-gfyjmwu3/script.sh'"
+    },
+    {
+      "case": "shebang-argv",
+      "exit": null,
+      "error": "[Errno 14] Bad address: '/tmp/minis-hf4-gfyjmwu3/script.sh'"
+    },
+    {
+      "case": "shebang-argv",
+      "exit": null,
+      "error": "[Errno 14] Bad address: '/tmp/minis-hf4-gfyjmwu3/script.sh'"
+    },
+    {
+      "case": "shebang-argv",
+      "exit": null,
+      "error": "[Errno 14] Bad address: '/tmp/minis-hf4-gfyjmwu3/script.sh'"
+    },
+    {
+      "case": "shebang-argv",
+      "exit": null,
+      "error": "[Errno 14] Bad address: '/tmp/minis-hf4-gfyjmwu3/script.sh'"
+    },
+    {
+      "case": "shebang-argv",
+      "exit": null,
+      "error": "[Errno 14] Bad address: '/tmp/minis-hf4-gfyjmwu3/script.sh'"
+    },
+    {
+      "case": "user-write-exit182",
+      "exit": 182,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "user-write-exit182",
+      "exit": 182,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "user-write-exit182",
+      "exit": 182,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "user-write-exit182",
+      "exit": 182,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "user-write-exit182",
+      "exit": 182,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "user-write-exit182",
+      "exit": 182,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "user-write-exit182",
+      "exit": 182,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "user-write-exit182",
+      "exit": 182,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "user-write-exit182",
+      "exit": 182,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "user-write-exit182",
+      "exit": 182,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "user-write-exit182",
+      "exit": 182,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "user-write-exit182",
+      "exit": 182,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "user-write-exit182",
+      "exit": 182,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "user-write-exit182",
+      "exit": 182,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "user-write-exit182",
+      "exit": 182,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "user-write-exit182",
+      "exit": 182,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "user-write-exit182",
+      "exit": 182,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "user-write-exit182",
+      "exit": 182,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "user-write-exit182",
+      "exit": 182,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "user-write-exit182",
+      "exit": 182,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "user-write-exit182",
+      "exit": 182,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "user-write-exit182",
+      "exit": 182,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "user-write-exit182",
+      "exit": 182,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "user-write-exit182",
+      "exit": 182,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "user-write-exit182",
+      "exit": 182,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "user-write-exit182",
+      "exit": 182,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "user-write-exit182",
+      "exit": 182,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "user-write-exit182",
+      "exit": 182,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "user-write-exit182",
+      "exit": 182,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "user-write-exit182",
+      "exit": 182,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "user-write-exit182",
+      "exit": -9,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "user-write-exit182",
+      "exit": 182,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "user-write-exit182",
+      "exit": 182,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "user-write-exit182",
+      "exit": 182,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "user-write-exit182",
+      "exit": 182,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "user-write-exit182",
+      "exit": 182,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "user-write-exit182",
+      "exit": 182,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "user-write-exit182",
+      "exit": 182,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "user-write-exit182",
+      "exit": 182,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "user-write-exit182",
+      "exit": 182,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "case": "argv-env",
+      "exit": 0,
+      "stdout": "a b'\n中文 $ x|1|1",
+      "stderr": ""
+    },
+    {
+      "case": "after-user182-alive",
+      "exit": 0,
+      "stdout": "alive",
+      "stderr": ""
+    }
+  ]
+}
