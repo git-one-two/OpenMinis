@@ -33,24 +33,13 @@ with tempfile.TemporaryDirectory(prefix='harmony-native-') as directory:
     if (number == PR_mmap && target != NULL && count != NULL
         && tracee->load_info != NULL
         && strcmp(tracee->load_info->raw_path, target) == 0
-        && tracee->harmony_loader.retries < (unsigned) atoi(count)
-        && peek_reg(tracee, CURRENT, SYSARG_5) != (word_t)-1) {
-        poke_reg(tracee, SYSARG_5, (word_t)-1);
+        && tracee->harmony_loader.retries < (unsigned) atoi(count)) {
+        note(tracee, WARNING, INTERNAL, "[TEST-FAULT] attempt=%u", tracee->harmony_loader.retries);
+        poke_reg(tracee, SYSARG_1, 1); /* MAP_FIXED requires page alignment. */
         return;
     }
 '''
     code = code.replace(anchor, injection + anchor)
-    code = code.replace('    tracee->harmony_loader.initial_sp = initial_sp;', '''    tracee->harmony_loader.initial_sp = initial_sp;
-    note(tracee, WARNING, INTERNAL, "[TEST-ARM] raw=%s range=%lx..%lx eligible=%d",
-         tracee->load_info->raw_path,
-         tracee->harmony_loader.text_start, tracee->harmony_loader.text_end,
-         recovery_enabled(tracee));''')
-    code = code.replace('    if (!tracee->harmony_loader.active || !recovery_enabled(tracee))', '''    if (getenv("MINIS_TEST_FAULT_TARGET") != NULL && tracee->load_info != NULL
-        && strcmp(tracee->load_info->raw_path, getenv("MINIS_TEST_FAULT_TARGET")) == 0)
-        note(tracee, WARNING, INTERNAL, "[TEST-ENTER] pc=%lx number=%s active=%d",
-             peek_reg(tracee, CURRENT, INSTR_POINTER), stringify_sysnum(get_sysnum(tracee, CURRENT)),
-             tracee->harmony_loader.active);
-    if (!tracee->harmony_loader.active || !recovery_enabled(tracee))''')
     helper.write_text(code)
     filter_path = source / 'src/syscall/seccomp.c'
     filters = filter_path.read_text()
@@ -109,7 +98,8 @@ print(json.dumps({'rows': rows, 'writes': pathlib.Path(marker).read_text() if pa
                 item['passed'] = (run.returncode == 0 and len(item.get('rows', [])) == 10
                     and all(row.get('exit') == expected and row.get('stdout') == expected_output
                             for row in item.get('rows', []))
-                    and item.get('writes') == expected_writes)
+                    and item.get('writes') == expected_writes
+                    and run.stderr.count('[TEST-FAULT]') == min(faults, 4) * 10)
                 results.append(item)
                 output.write_text(json.dumps(results, ensure_ascii=False, indent=2))
                 print(json.dumps({k: v for k, v in item.items() if k not in ('rows', 'stderr')}, ensure_ascii=False), flush=True)
