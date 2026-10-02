@@ -1,5 +1,5 @@
 # Harmony hf5：恢复流程修正与真机诊断
-日期：2026-10-02。状态：候选，华为真机验收尚未完成。
+日期：2026-10-02。状态：候选已发布，华为真机验收尚未完成。
 
 ## hf4 验收事实
 原始数据在 docs/research/hf4-device/，commit 2853190cc91f。
@@ -39,3 +39,17 @@ python3 docs/research/hf5-device/verify_hf5.py --samples 400
 报告含逐样本结果和本轮新增诊断内容，脚本不改代码、不递归调用 debug.shellExecute。
 同 hf4 验收条件：400/400 true、40/40 shebang、40个用户182且恰好40次写入、参数保持、父进程存活。
 任何一项未过都继续视为未修复。shebang EFAULT 的设备根因尚未定位，须用新增阶段日志区分翻译层与 kernel exec。
+
+## 已发布安装包
+发行版：https://github.com/git-one-two/home-dev-control/releases/tag/openminis-1.14-dev-hf5-20261002
+APK：OpenMinis-1.14-dev-hf5.apk，66,246,806 字节。
+SHA256：1fbf3d0cffcf9a5f86cb582795c07ad92d7d7014b3a37da3b0aac44ea2d39b8d。
+包名 com.openminis.app.dev，versionCode 11405，versionName 1.14-dev-hf5。
+原签名证书 SHA256：87586030a1614be88a5f66f3a09c4f476782fb755f6af81f2287126d12cf5d60。
+libproot.so SHA256：b94022ea3374f38714bb7e023d51a3693d444d51fd4eccd6c2a5a52bd8f085ba。
+loader SHA256：44ef39c1e1a18c09f6e4c4b5d6f8bba82d30596598bd155ec162d05c5122ff04。
+Android CI 36989848005 构建和 sandbox 单元测试成功，APK 源码为上述 151bfa84 提交。
+原生 CI 36989650866：240 子进程通过，420 次恢复尝试均写入诊断文件，无意外恢复失败。
+发行版附 hf5-verification.json 和 harmony-native-results.json。
+设备脚本现检查 libproot.so 哈希；无法读取 APK 时此项也不通过，需确认版本后补证据。
+候选已发布，Huawei 真机验收待回传；不得用 CI 通过代替设备通过。
