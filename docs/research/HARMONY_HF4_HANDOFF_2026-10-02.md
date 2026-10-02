@@ -28,10 +28,10 @@ hf3 真机原始脚本在一个 Python 进程里调用 subprocess.run(['/bin/tru
 - 编译实际 helper 函数体的注入测试通过：参数、shebang、次数、提交边界、主动退出182、fd flags、无效栈、
   失败后的子进程终止、ELF 范围身份、禁用开关、重叠映射。
 - 这些测试不模拟 Huawei 内核，不能当作真机成功证据。
-- 正式 CI 还需完整原生构建、旧 regset 注入测试、所有 sandbox 测试及 APK 打包。
+- 正式 CI 36974374774 已通过：完整原生构建、旧 regset 注入测试、新恢复注入测试、所有 sandbox 测试及 APK 打包。
 
 ## 真机验收
-1. 安装原签名 hf4，不清数据；运行相同 verify_chatgpt.py，保留与 hf3 的可比样本。
+1. 安装原签名 hf4，不清数据；运行相同 verify_chatgpt.py 保留可比样本，再运行 python3 docs/research/hf4-device/verify_hf4.py --samples 400。
 2. 追加报告进程中 PROOT_EXEC_LOADER_RETRY 和 PROOT_VERIFY_REGSET 的值。
 3. 复跑原始真实 Agent 任务，确认子进程无182且 Agent 不挂起。
 4. 若仍失败，提供精简 App 日志中的 [proot-exec-loader-retry] 行和失败的 native stderr。
