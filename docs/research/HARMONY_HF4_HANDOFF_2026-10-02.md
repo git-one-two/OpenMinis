@@ -1,5 +1,11 @@
 # Harmony hf4：子程序启动阶段恢复候选
-时间：2026-10-02（Asia/Shanghai）。真机验收尚未完成。
+时间：2026-10-02（Asia/Shanghai）。**真机验收失败，不能作为已修复版本。**
+
+最新原始记录：`docs/research/hf4-device/`，commit `2853190cc91f`。
+400 次 `/bin/true`：372 成功、28 SIGKILL（7%）；shebang 40/40 execve EFAULT；写后 exit182 测试 39 次正常写入/退出、1 次子进程 SIGKILL。
+hf4 的失败保护会主动杀掉未完成恢复的子进程，旧日志没有 errno，尚不能把失败归因于内核。
+缺少一次写入证明该项验收失败，不能单凭此断言用户代码被重放或已经写入后的退出码被吞掉。
+后续候选必须包含真实 native syscall 流程测试及可导出的失败阶段/错误码。
 
 ## 直接依据
 hf3 真机原始脚本在一个 Python 进程里调用 subprocess.run(['/bin/true'])。
