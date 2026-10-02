@@ -36,3 +36,14 @@ ARM64 Linux CI 36995425310 成功：seccomp开/关各400 true、40 shebang、40�
 参数与写入次数全通过。此检查验证旧source/loader协议，不代表Huawei通过。
 HF6最终应用源码4ff6333a1ac88ccf3142798e1b2a8e2b21dad02d；最终构建CI36996013892。
 关闭offload时停止其服务，清理先前版本生成的精确 no-op 占位脚本，避免手机专属命令假成功；普通用户脚本不符合该内容时不清理。
+
+## 已发布并远端核对
+https://github.com/git-one-two/home-dev-control/releases/tag/openminis-1.14-dev-hf6-legacy-20261002
+releases/latest 已返回此tag；draft=false、prerelease=false。
+APK OpenMinis-1.14-dev-hf6-legacy.apk，66,234,518字节。
+SHA256 3d2122cbff15ccbe54be57f7cb28ca00dfedc00d75368a71dfc63c6d4c2509c2；GitHub asset digest与本地一致。
+签名v2/v3通过，证书SHA256 87586030a1614be88a5f66f3a09c4f476782fb755f6af81f2287126d12cf5d60，与旧包一致。
+APK三份执行组件与旧包逐字节哈希匹配；assets/proot-aarch64与jni libproot.so一致。
+Android CI36996013892的sandbox单元测试及构建均成功。
+发行版附hf6-verification.json和harmony-legacy-results.json。
+当前状态：对照候选已发布，Huawei真机验收待回传；未宣称设备问题已修复。
