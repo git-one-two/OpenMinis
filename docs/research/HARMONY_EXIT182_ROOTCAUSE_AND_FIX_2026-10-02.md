@@ -1,6 +1,8 @@
 # 华为/HarmonyOS 设备 OpenMinis 1.14 沙盒 exit-182 随机崩溃：根因定案、候选修复与接手指引
 
 日期：2026-10-02（跨 10-01/10-02 多个调查会话汇总定稿）
+
+> **hf3 接手复核纠正（2026-10-02）**：本文“182 后重试整条命令零副作用”的结论不成立：一个内层 exec 的 loader 失败，不排除外层用户代码已经执行。旧 reg.c 候选补丁还存在 iovec 指针复用、32 位 syscall 回读、AArch32 布局与未再次校验等问题，不能原样用于构建。实际修复与验收以 [hf3 交接](HARMONY_HF3_HANDOFF_2026-10-02.md) 为准。本文未包含其引用的 §2 原始 trace，因此“内核根因定案”目前是原会话推断，本轮尚未独立复核真机原始证据。
 分支：`upgrade/openminis-1.14-harmony`
 前置文档：`docs/research/HARMONY_AGENT_SANDBOX_CRASH_2026-10-01.md`（第一份研究报告；本文是其最终定案与修复稿）
 读者：接手推进的任何人/任何 AI（ChatGPT、新会话等）。本文自包含，不依赖任何历史会话上下文。
@@ -45,7 +47,7 @@
 - wstatus `0xb600` = WIFEXITED 正常退出、exit code 182。
 - 出处：proot loader 的 `FATAL()` 宏 → `SYSCALL(EXIT, 1, 182)`（loader.c:47；两代 pin 的 loader 逐字节相同）。
 - **182 = loader 放弃加载**，发生在 guest 用户代码（busybox/sh）任何指令执行之前 → 同参数重试零副作用（§4.2 方案的根基）。
-- fork 版 loader.c 全文无任何 VERBOSE/note 调用 → 调大 PROOT_VERBOSE 不会有 loader 内部日志（实测确认）；loader 可观测化的唯一手段 = 拆退出码（loader_diag2，§4.3）。## 3. 根因（定案表述）
+- fork 版 loader.c 全文无任何 VERBOSE/note 调用 → 调大 PROOT_VERBOSE 不会有 loader 内部日志（实测确认）；loader 可观测化的唯一手段 = 拆退出码（loader_diag2，§4.3）。## 3. 根因（原会话假说，待原始证据与真机对照复核）
 
 **本 ROM（华为 HarmonyOS，kernel 5.10.43）在 ptrace 停止↔恢复循环中偶发不能忠实保留跟踪态。** 具体拆成两个不可区分表象（对 proot 而言都表现为"写进去了、恢复时不翼而飞"）：
 
@@ -76,7 +78,9 @@ proot 的 `chain_next_syscall`（syscall/chain.c）在链式 syscall 重启时�
 
 ### 4.2 App 层 182 安全重试（待实施，优先级最高）
 
-182 的语义是"loader 放弃"——此刻 guest 内没有执行过任何用户指令，**同参数重试零副作用**（与 SIGSEGV-mid-run 完全不同：那种情况进程可能已写了文件，不能盲目重试）。所以兜底方案与内核细节无关、必定正确：
+**hf3 纠正：**182 的语义是某一次 exec 的 loader 放弃，仅证明该次目标未进入用户代码。整条命令此前可能已经执行、写入文件或发送请求，不能无条件重跑。hf3 在内层命令 shell 进入任何用户代码之前写入独立 started 标记，标记写失败以 125 退出；仅未越过此边界的 loader 失败才允许最多 3 次启动重试，并共用原超时预算、遵守取消。实现见 `LoaderStartupRetryPolicy.kt` / `FreshProcessShell.kt` / `ForegroundCommandGroup.kt`。
+
+以下原建议保留作为历史材料，不能不加上述边界直接实施：
 
 - `SeccompFallbackPolicy.kt`（现有"动态链接异常退出自动兼容重试"的所在，Issue #186 机制）：将 **exit 182 与 0xb600 状态识别为 `loader-fatal` 类**，走既有重试通道（建议退避：立刻 1 次 → 50ms → 200ms，上限 3 次；并在日志埋点统计命中数）。
 - `FreshProcessShell.kt`/`ExecutionCoordinator.kt`：把 `[Shell not running] (exit code: 182)` 的静默失败改为打点+重试后仍失败才上抛。
