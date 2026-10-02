@@ -1,0 +1,86 @@
+--- proot/old/src/tracee/reg.c
++++ proot/new/src/tracee/reg.c
+@@ -327,9 +327,39 @@
+ 		}
+ 
+ #if defined(ARCH_ARM64)
++		/* [T-huawei-regset-dr] Huawei/HarmonyOS kernels (5.10.43 observed)
++		 * occasionally fail to retain ptrace register writes made during
++		 * the sysenter/chain-restart sequence: the guest resumes with a
++		 * stale x0 (often the errno-flavoured residue of the previous
++		 * syscall, e.g. 0xfffffffffffffff2) while the remaining arguments
++		 * keep the freshly written values.  In the loader this kills
++		 * chained mmap emulation ("second MMAP_FILE gets x0=-14" ->
++		 * status != stmt->mmap.addr -> FATAL exit(182)); in ordinary
++		 * traced programs it surfaces as random SIGSEGV/SIGBUS.
++		 * See docs/research/HARMONY_AGENT_SANDBOX_CRASH_2026-10-01.md.
++		 *
++		 * Mitigations implemented here:
++		 *  (1) push PRSTATUS *before* NT_ARM_SYSTEM_CALL (was the reverse);
++		 *  (2) after the writes, read the banks back and rewrite ONCE on
++		 *      mismatch -- this catches writes dropped while the tracee
++		 *      is stopped.  Losses that happen later, when the kernel
++		 *      restores the context at resume time, are NOT catchable
++		 *      here; those need an app-level retry or a kernel fix.
++		 *  Effectiveness on the target device is measured by the A/B
++		 *  harness recorded in HANDOFF-2026-10-02 (nested proot,
++		 *  300x /bin/true per binary).  A candidate fix, not a cure.
++		 */
+ 		struct iovec regs;
+ 		word_t current_sysnum = REG(tracee, CURRENT, SYSARG_NUM);
+ 
++		/* Update other registers first.  */
++		regs.iov_base = &tracee->_regs[CURRENT];
++		regs.iov_len  = sizeof(tracee->_regs[CURRENT]);
++
++		status = ptrace(PTRACE_SETREGSET, tracee->pid, NT_PRSTATUS, &regs);
++		if (status < 0)
++			return status;
++
+ 		/* Update syscall number if needed.  On arm64, a new
+ 		 * subcommand has been added to PTRACE_{S,G}ETREGSET
+ 		 * to allow write/read of current sycall number.  */
+@@ -341,13 +371,38 @@
+ 				//note(tracee, WARNING, SYSTEM, "can't set the syscall number");
+ 				return status;
+ 			}
++			/* (2a) verify the syscall-number write landed.  */
++			{
++				word_t check_num = 0;
++				struct iovec vnum;
++				vnum.iov_base = &check_num;
++				vnum.iov_len = sizeof(check_num);
++				if (ptrace(PTRACE_GETREGSET, tracee->pid, NT_ARM_SYSTEM_CALL, &vnum) >= 0
++				    && check_num != current_sysnum) {
++					status = ptrace(PTRACE_SETREGSET, tracee->pid,
++							NT_ARM_SYSTEM_CALL, &regs);
++					if (status < 0)
++						return status;
++				}
++			}
+ 		}
+ 
+-		/* Update other registers.  */
+-		regs.iov_base = &tracee->_regs[CURRENT];
+-		regs.iov_len  = sizeof(tracee->_regs[CURRENT]);
+-
+-		status = ptrace(PTRACE_SETREGSET, tracee->pid, NT_PRSTATUS, &regs);
++			/* (2b) read the general register bank back; rewrite once on mismatch.
++			 * Compare x0..x30, sp, pc only (first 33 words); pstate is
++			 * masked by the kernel on write and would give false hits.  */
++			{
++				byte_t buffer[sizeof(tracee->_regs[CURRENT])];
++				struct iovec verify;
++				verify.iov_base = buffer;
++				verify.iov_len  = sizeof(buffer);
++				if (ptrace(PTRACE_GETREGSET, tracee->pid, NT_PRSTATUS, &verify) >= 0
++				    && memcmp(buffer, &tracee->_regs[CURRENT],
++					      33 * sizeof(word_t)) != 0) {
++					status = ptrace(PTRACE_SETREGSET, tracee->pid, NT_PRSTATUS, &regs);
++					if (status < 0)
++						return status;
++				}
++			}
+ #else
+ #    if defined(ARCH_ARM_EABI)
+ 		/* On ARM, a special ptrace request is required to
