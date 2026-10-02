@@ -1,0 +1,26 @@
+name: Test August Harmony baseline
+on:
+  workflow_dispatch:
+  push:
+    branches: [upgrade/openminis-1.14-harmony]
+    paths: [".github/workflows/test-harmony-legacy.yml", "scripts/test_harmony_legacy.py", "deps/harmony-legacy/**"]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: OpenMinis/proot
+          ref: 8cf13e997cdc9472997aae19df8050c073c9a86c
+          path: deps/legacy-source
+      - run: sudo apt-get update -qq && sudo apt-get install -y libtalloc-dev clang lld
+      - run: python3 scripts/test_harmony_legacy.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: harmony-legacy-results
+          path: harmony-legacy-results.json

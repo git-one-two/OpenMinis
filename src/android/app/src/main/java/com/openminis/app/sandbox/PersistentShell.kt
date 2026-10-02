@@ -254,7 +254,7 @@ class PersistentShell(
         }
 
         val handlers = NativeOffloadServer.registeredHandlers
-        if (handlers.isNotEmpty()) {
+        if (!com.openminis.app.BuildConfig.HARMONY_LEGACY_PROOT && handlers.isNotEmpty()) {
             cmd.add("--native-offload=${NativeOffloadServer.socketName}:${handlers.joinToString(",")}")
         }
 

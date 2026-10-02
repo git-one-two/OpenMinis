@@ -320,13 +320,13 @@ internal class FreshProcessShell(
             cmd.add("-b"); cmd.add("$hostPath:$linuxPath")
         }
         val handlers = NativeOffloadServer.registeredHandlers
-        if (useNativeOffload && handlers.isNotEmpty()) {
+        if (!com.openminis.app.BuildConfig.HARMONY_LEGACY_PROOT && useNativeOffload && handlers.isNotEmpty()) {
             cmd.add("--native-offload=${NativeOffloadServer.socketName}:${handlers.joinToString(",")}")
         }
         // Keep the custom rtnetlink extension out of conservative Agent mode.
         // It remains enabled for upstream/default execution paths.
         if (useFakeNetlink) {
-            cmd.add("--fake-netlink")
+            if (!com.openminis.app.BuildConfig.HARMONY_LEGACY_PROOT) cmd.add("--fake-netlink")
         }
         // [T-android-shell-fresh-process] Step 4: run the command as its own
         // process-group leader. No marker, no pgid reporting — the host does
@@ -349,7 +349,7 @@ internal class FreshProcessShell(
         if (PRootKernel.nativeLibDir.isNotEmpty()) env["LD_LIBRARY_PATH"] = PRootKernel.nativeLibDir
         if (PRootKernel.prootLoaderPath.isNotEmpty()) env["PROOT_LOADER"] = PRootKernel.prootLoaderPath
         if (PRootKernel.prootLoader32Path.isNotEmpty()) env["PROOT_LOADER_32"] = PRootKernel.prootLoader32Path
-        if (com.openminis.app.BuildConfig.DEV_TOOLS) {
+        if (com.openminis.app.BuildConfig.DEV_TOOLS && !com.openminis.app.BuildConfig.HARMONY_LEGACY_PROOT) {
             env["PROOT_VERIFY_REGSET"] = "1"
             env["PROOT_EXEC_LOADER_RETRY"] = "1"
             val diagnostic = java.io.File(context.filesDir,
@@ -369,6 +369,12 @@ internal class FreshProcessShell(
         for ((k, v) in envVars) env[k] = v
         if (useNoSeccomp) {
             env[SeccompFallbackPolicy.NO_SECCOMP_ENV] = SeccompFallbackPolicy.NO_SECCOMP_VALUE
+        }
+        if (com.openminis.app.BuildConfig.HARMONY_LEGACY_PROOT) {
+            env.remove("PROOT_VERIFY_REGSET")
+            env.remove("PROOT_EXEC_LOADER_RETRY")
+            env.remove("PROOT_EXEC_DIAG_FILE")
+            env["MINIS_SANDBOX_BASELINE"] = "august-2026"
         }
         return pb.start()
     }

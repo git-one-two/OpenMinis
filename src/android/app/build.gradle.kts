@@ -36,7 +36,7 @@ android {
         applicationId = "com.openminis.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 11405
+        versionCode = 11406
         versionName = "1.14"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -47,6 +47,8 @@ android {
         // `release`. Kept separate from BuildConfig.DEBUG so a non-debuggable
         // build can still carry the tooling.
         buildConfigField("boolean", "DEV_TOOLS", "false")
+        // HF6 controlled baseline: the retained August PRoot + paired loaders.
+        buildConfigField("boolean", "HARMONY_LEGACY_PROOT", "true")
 
         // System prompt prefix required by Anthropic for Claude Code OAuth
         // credentials. Empty in the public mirror (see provider-customization.properties).
@@ -80,7 +82,7 @@ android {
             // Keep the custom debug build installable beside the official app.
             // This preserves the package identity used by the previous dev build.
             applicationIdSuffix = ".dev"
-            versionNameSuffix = "-dev-hf5"
+            versionNameSuffix = "-dev-hf6-legacy"
             buildConfigField("boolean", "DEV_TOOLS", "true")
         }
         // `perf`: the debug variant minus android:debuggable. ART refuses to

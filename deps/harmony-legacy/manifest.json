@@ -1,0 +1,12 @@
+{
+  "source_apk_sha256": "0ffd351abb48a57335be744af1d1ab722e23abcc4ae8c6f5d25c9a93d4d86b65",
+  "source_apk_version": "0.20-preview-dev",
+  "reference_app_commit": "022b5112d7b830c4ea85c3f311cacf89f3aa08cf",
+  "reference_proot_commit": "8cf13e997cdc9472997aae19df8050c073c9a86c",
+  "sha256": {
+    "libproot.so": "da94efb17b5c493ebeaf2c71ae8cfc00e2f26d95b4251b399ed1e9ddf526075b",
+    "libproot-loader.so": "12d2b63e897fd91a334fce23edea5d2419cae4d5fd2a369f05d03ab75682add0",
+    "libproot-loader32.so": "d08a819a973370201c9556a044fa87fd3ab00bd9c0204d155bfb0c7d45faabb7"
+  },
+  "status": "Retained user-working baseline; HF6 Huawei validation pending; no HF3-HF5 native patches in these bytes"
+}

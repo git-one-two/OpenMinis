@@ -445,7 +445,7 @@ class TerminalSession(private val context: Context) {
         cmd.addAll(SessionMounts.toProotArgs(SessionMounts.forContext(context, sessionId).mounts))
 
         val handlers = NativeOffloadServer.registeredHandlers
-        if (handlers.isNotEmpty()) {
+        if (!com.openminis.app.BuildConfig.HARMONY_LEGACY_PROOT && handlers.isNotEmpty()) {
             cmd.add("--native-offload=${NativeOffloadServer.socketName}:${handlers.joinToString(",")}")
         }
 
@@ -467,7 +467,7 @@ class TerminalSession(private val context: Context) {
         // moving the failure later for callers that then bind a local address.
         // Whatever exposure decision that flag gets, both builders take it
         // together.
-        cmd.add("--fake-netlink")
+        if (!com.openminis.app.BuildConfig.HARMONY_LEGACY_PROOT) cmd.add("--fake-netlink")
 
         // Login + interactive so /etc/profile is sourced (readline, history, color aliases).
         cmd.add("/bin/sh")

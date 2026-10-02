@@ -721,7 +721,7 @@ object PRootKernel {
         // Native offload: route registered handler names to the host-side
         // NativeOffloadServer over the abstract unix socket.
         val handlers = NativeOffloadServer.registeredHandlers
-        if (handlers.isNotEmpty()) {
+        if (!com.openminis.app.BuildConfig.HARMONY_LEGACY_PROOT && handlers.isNotEmpty()) {
             cmd.add("--native-offload=${NativeOffloadServer.socketName}:${handlers.joinToString(",")}")
         }
 
@@ -743,7 +743,7 @@ object PRootKernel {
         // enumeration to succeed, but a caller that then picks a source
         // interface or binds a local address fails LATER instead of at
         // startup — a worse failure, not a better one.
-        cmd.add("--fake-netlink")
+        if (!com.openminis.app.BuildConfig.HARMONY_LEGACY_PROOT) cmd.add("--fake-netlink")
 
         // Shell command
         cmd.add("/bin/sh")
