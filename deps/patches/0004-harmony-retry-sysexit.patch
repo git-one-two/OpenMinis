@@ -1,0 +1,53 @@
+diff --git a/src/execve/loader_retry.c b/src/execve/loader_retry.c
+--- a/src/execve/loader_retry.c
++++ b/src/execve/loader_retry.c
+@@ -170,6 +170,10 @@
+     /* ORIGINAL will be snapshotted after this hook. Force the kernel's separate
+      * NT_ARM_SYSTEM_CALL update even though both snapshots now say execve. */
+     tracee->harmony_loader.force_sysnum = true;
++    /* EXIT normally has no sysexit. The replacement EXEC must deliver one,
++     * including across PTRACE_EVENT_EXEC, to transfer the new load script. */
++    tracee->restart_how = PTRACE_SYSCALL;
++    tracee->sysexit_pending = true;
+     tracee->harmony_loader.restarting = true;
+     tracee->harmony_loader.retry_exec_in_flight = true;
+     tracee->harmony_loader.active = false;
+@@ -190,7 +194,10 @@
+         tracee->harmony_loader.retry_exec_in_flight = false;
+         tracee->harmony_loader.force_sysnum = false;
+         tracee->harmony_loader.active = false;
+-        note(tracee, WARNING, INTERNAL, "[proot-exec-loader-retry] retry exec failed; child stopped");
++        note(tracee, WARNING, INTERNAL, "[proot-exec-loader-retry] retry failed: result=%ld status=%d syscall=%lu pc=%lx; child stopped",
++             (long) peek_reg(tracee, CURRENT, SYSARG_RESULT), tracee->status,
++             (unsigned long) get_sysnum(tracee, ORIGINAL),
++             (unsigned long) peek_reg(tracee, CURRENT, INSTR_POINTER));
+         kill(tracee->pid, SIGKILL);
+     }
+ #else
+diff --git a/src/syscall/syscall.c b/src/syscall/syscall.c
+--- a/src/syscall/syscall.c
++++ b/src/syscall/syscall.c
+@@ -235,6 +235,8 @@
+ 	int push_regs_status = push_specific_regs(tracee, override_sysnum);
+     tracee->harmony_loader.force_sysnum = false;
+     if (forced_loader_exec && push_regs_status < 0) {
++        note(tracee, WARNING, INTERNAL,
++             "[proot-exec-loader-retry] register update failed: errno=%d", errno);
+         harmony_loader_fail_retry(tracee);
+         return;
+     }
+diff --git a/src/syscall/seccomp.c b/src/syscall/seccomp.c
+--- a/src/syscall/seccomp.c
++++ b/src/syscall/seccomp.c
+@@ -342,7 +342,10 @@
+ 	{ PR_chroot,		0 },
+ 	{ PR_connect,		0 },
+ 	{ PR_creat,		0 },
+-	{ PR_execve,		FILTER_SYSEXIT },
++	#ifdef ARCH_ARM64
++    { PR_exit,              0 }, /* Observe loader FATAL before guest entry. */
++#endif
++    { PR_execve,		FILTER_SYSEXIT },
+ 	{ PR_execveat,		FILTER_SYSEXIT },
+ 	{ PR_faccessat,		0 },
+ 	{ PR_faccessat2,	FILTER_SYSEXIT },

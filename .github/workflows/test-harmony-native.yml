@@ -1,0 +1,26 @@
+name: Test Harmony native loader recovery
+on:
+  workflow_dispatch:
+  push:
+    branches: [upgrade/openminis-1.14-harmony]
+    paths:
+      - ".github/workflows/test-harmony-native.yml"
+      - "scripts/test_harmony_native.py"
+      - "deps/patches/**"
+permissions:
+  contents: read
+jobs:
+  native-arm64:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - run: sudo apt-get update && sudo apt-get install -y libtalloc-dev clang lld
+      - run: python3 scripts/test_harmony_native.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: harmony-native-results
+          path: harmony-native-results.json

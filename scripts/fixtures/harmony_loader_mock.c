@@ -12,10 +12,11 @@
 #include <unistd.h>
 #include <sys/prctl.h>
 #include <errno.h>
+#include <sys/ptrace.h>
 typedef uint64_t word_t;
 enum { CURRENT, ORIGINAL, MODIFIED };
 enum { SYSARG_1, SYSARG_2, SYSARG_3, SYSARG_4, SYSARG_5, SYSARG_6,
-       SYSARG_NUM=8, INSTR_POINTER=32, STACK_POINTER=31 };
+       SYSARG_RESULT=SYSARG_1, SYSARG_NUM=8, INSTR_POINTER=32, STACK_POINTER=31 };
 enum { PR_exit=93, PR_execve=221, PR_openat=56, PR_prctl=167 };
 enum { ET_EXEC=2, ET_DYN=3, PT_LOAD=1, PF_X=1, WARNING=1, INTERNAL=1 };
 struct user_regs_struct { word_t values[34]; };
@@ -29,7 +30,7 @@ typedef struct LoadInfo { char *user_path, *raw_path; Mapping *mappings; struct 
 static size_t mapping_count;
 #define talloc_array_length(p) ((void)(p), mapping_count)
 typedef struct {
-    int pid; bool is_aarch32;
+    int pid, status, restart_how; bool is_aarch32, sysexit_pending;
     void *qemu;
     struct { void *ptracer; } as_ptracee;
     struct user_regs_struct _regs[3];
