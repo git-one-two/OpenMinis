@@ -36,3 +36,13 @@ hf3 真机原始脚本在一个 Python 进程里调用 subprocess.run(['/bin/tru
 3. 复跑原始真实 Agent 任务，确认子进程无182且 Agent 不挂起。
 4. 若仍失败，提供精简 App 日志中的 [proot-exec-loader-retry] 行和失败的 native stderr。
 5. PROOT_EXEC_LOADER_RETRY=0 可单独关闭新候选；PROOT_VERIFY_REGSET=0 同时使新候选不启用。
+
+## 已交付安装包
+- 代码提交：fa22a70d3156ef04b67a65603acdbeda0d01df30。
+- CI：https://github.com/git-one-two/OpenMinis/actions/runs/36974374774，全部步骤成功。
+- 原签名证书 SHA256：87586030a1614be88a5f66f3a09c4f476782fb755f6af81f2287126d12cf5d60。
+- APK：OpenMinis-1.14-dev-hf4.apk，66,242,710 字节；com.openminis.app.dev / 11404 / 1.14-dev-hf4。
+- APK SHA256：f90bb758f0c5f0bf6789ec30a4453c82f47201918b64588ad8d14a8600aa444d。
+- libproot.so：273,288 字节；SHA256 aa29de2e337606b2720e3ae990319041fb4e208a2e13281d792cd85c1fe15e93。
+- 两个 loader 保留原固定哈希，不应凭 loader 哈希未变判为未更新。
+- 手机仍未接入 adb，本轮真机效果尚未验证。
