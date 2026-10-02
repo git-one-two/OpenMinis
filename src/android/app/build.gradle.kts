@@ -80,7 +80,7 @@ android {
             // Keep the custom debug build installable beside the official app.
             // This preserves the package identity used by the previous dev build.
             applicationIdSuffix = ".dev"
-            versionNameSuffix = "-dev-hf4"
+            versionNameSuffix = "-dev-hf5"
             buildConfigField("boolean", "DEV_TOOLS", "true")
         }
         // `perf`: the debug variant minus android:debuggable. ART refuses to
