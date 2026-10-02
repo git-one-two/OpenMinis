@@ -349,7 +349,10 @@ internal class FreshProcessShell(
         if (PRootKernel.nativeLibDir.isNotEmpty()) env["LD_LIBRARY_PATH"] = PRootKernel.nativeLibDir
         if (PRootKernel.prootLoaderPath.isNotEmpty()) env["PROOT_LOADER"] = PRootKernel.prootLoaderPath
         if (PRootKernel.prootLoader32Path.isNotEmpty()) env["PROOT_LOADER_32"] = PRootKernel.prootLoader32Path
-        if (com.openminis.app.BuildConfig.DEV_TOOLS) env["PROOT_VERIFY_REGSET"] = "1"
+        if (com.openminis.app.BuildConfig.DEV_TOOLS) {
+            env["PROOT_VERIFY_REGSET"] = "1"
+            env["PROOT_EXEC_LOADER_RETRY"] = "1"
+        }
         env["TERM"] = "dumb"
         env["PS1"] = ""
         env["TZ"] = PRootKernel.posixTz()

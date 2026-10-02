@@ -1,0 +1,328 @@
+diff --git a/src/GNUmakefile b/src/GNUmakefile
+--- a/src/GNUmakefile
++++ b/src/GNUmakefile
+@@ -24,6 +24,7 @@
+ 	cli/note.o		\
+ 	execve/enter.o		\
+ 	execve/exit.o		\
++	execve/loader_retry.o	\
+ 	execve/shebang.o	\
+ 	execve/elf.o		\
+ 	execve/ldso.o		\
+diff --git a/src/tracee/tracee.h b/src/tracee/tracee.h
+--- a/src/tracee/tracee.h
++++ b/src/tracee/tracee.h
+@@ -215,6 +215,14 @@
+ 	 * execve sysexit.  */
+ 	struct load_info *load_info;
+ 
++    /* Private, per-exec state; not inherited by forked children. */
++    struct {
++        word_t initial_sp, text_start, text_end;
++        unsigned retries;
++        bool active, restarting, force_sysnum, retry_exec_in_flight;
++        char *raw_path;
++    } harmony_loader;
++
+ #ifdef HAS_POKEDATA_WORKAROUND
+ 	word_t pokedata_workaround_stub_addr;
+ 	bool pokedata_workaround_cancelled_syscall;
+diff --git a/src/execve/execve.h b/src/execve/execve.h
+--- a/src/execve/execve.h
++++ b/src/execve/execve.h
+@@ -31,6 +31,10 @@
+ 
+ extern int translate_execve_enter(Tracee *tracee);
+ extern void translate_execve_exit(Tracee *tracee);
++extern void harmony_loader_prepare(Tracee *tracee, const char *loader_path);
++extern void harmony_loader_arm(Tracee *tracee, word_t initial_sp);
++extern void harmony_loader_enter(Tracee *tracee);
++extern void harmony_loader_fail_retry(Tracee *tracee);
+ extern int translate_and_check_exec(Tracee *tracee, char host_path[PATH_MAX], const char *user_path);
+ 
+ typedef struct mapping {
+diff --git a/src/execve/enter.c b/src/execve/enter.c
+--- a/src/execve/enter.c
++++ b/src/execve/enter.c
+@@ -710,6 +710,7 @@
+ 	if (loader_path == NULL)
+ 		return -ENOENT;
+ 
++	harmony_loader_prepare(tracee, loader_path);
+ 	status = set_sysarg_path(tracee, loader_path, SYSARG_1);
+ 	if (status < 0)
+ 		return status;
+diff --git a/src/execve/exit.c b/src/execve/exit.c
+--- a/src/execve/exit.c
++++ b/src/execve/exit.c
+@@ -388,6 +388,7 @@
+ 
+ 	/* Remember we are in the sysexit stage, so be sure the
+ 	 * current register values will be used as-is at the end.  */
++	harmony_loader_arm(tracee, stack_pointer);
+ 	save_current_regs(tracee, ORIGINAL);
+ 	tracee->_regs_were_changed = true;
+ 
+diff --git a/src/syscall/syscall.c b/src/syscall/syscall.c
+--- a/src/syscall/syscall.c
++++ b/src/syscall/syscall.c
+@@ -25,6 +25,7 @@
+ #include <string.h>      /* strlen(3), */
+ #include <errno.h>       /* errno(3), E* */
+ 
++#include "execve/execve.h"
+ #include "syscall/syscall.h"
+ #include "syscall/chain.h"
+ #include "extension/extension.h"
+@@ -110,6 +111,10 @@
+ 	status = fetch_regs(tracee);
+ 	if (status < 0)
+ 		return;
++
++	/* Recover an individual pre-entry loader, before ORIGINAL is captured. */
++	if (is_enter_stage && tracee->chain.syscalls == NULL)
++		harmony_loader_enter(tracee);
+ 
+ 	int suppressed_syscall_status = 0;
+ 
+@@ -211,6 +216,9 @@
+ 		else
+ 			(void) notify_extensions(tracee, SYSCALL_CHAINED_EXIT, 0, 0);
+ 
++        if (tracee->chain.syscalls == NULL)
++            harmony_loader_fail_retry(tracee);
++
+ 		/* Reset the tracee's status. */
+ 		tracee->status = 0;
+ #ifdef HAS_POKEDATA_WORKAROUND
+@@ -223,7 +231,13 @@
+ 	}
+ 
+ 	bool override_sysnum = is_enter_stage && tracee->chain.syscalls == NULL;
++    bool forced_loader_exec = tracee->harmony_loader.force_sysnum;
+ 	int push_regs_status = push_specific_regs(tracee, override_sysnum);
++    tracee->harmony_loader.force_sysnum = false;
++    if (forced_loader_exec && push_regs_status < 0) {
++        harmony_loader_fail_retry(tracee);
++        return;
++    }
+ 
+ 	/* Handle inability to change syscall number */
+ 	if (push_regs_status < 0 && override_sysnum) {
+diff --git a/src/tracee/reg.c b/src/tracee/reg.c
+--- a/src/tracee/reg.c
++++ b/src/tracee/reg.c
+@@ -385,7 +385,8 @@
+ 		if (!tracee->is_aarch32 && getenv("PROOT_VERIFY_REGSET") != NULL && strcmp(getenv("PROOT_VERIFY_REGSET"), "1") == 0)
+ 			return push_verified_arm64_regs(tracee->pid, &tracee->_regs[CURRENT],
+ 				sizeof(tracee->_regs[CURRENT]), (int) current_sysnum,
+-				including_sysnum && current_sysnum != REG(tracee, ORIGINAL, SYSARG_NUM));
++				including_sysnum && (current_sysnum != REG(tracee, ORIGINAL, SYSARG_NUM)
++                    || tracee->harmony_loader.force_sysnum));
+ 
+ 		/* Update syscall number if needed.  On arm64, a new
+ 		 * subcommand has been added to PTRACE_{S,G}ETREGSET
+diff --git a/src/execve/loader_retry.c b/src/execve/loader_retry.c
+new file mode 100644
+--- /dev/null
++++ b/src/execve/loader_retry.c
+@@ -0,0 +1,199 @@
++/* OpenMinis Harmony loader recovery, GPL-2.0-or-later.
++ * Re-exec only a failing ELF loader before its PR_SET_NAME commit boundary.
++ * The parent shell/Python process and its completed side effects stay intact.
++ */
++#include <errno.h>
++#include <fcntl.h>
++#include <signal.h>
++#include <stdint.h>
++#include <stdlib.h>
++#include <string.h>
++#include <sys/prctl.h>
++#include <talloc.h>
++#include <unistd.h>
++#include "execve/execve.h"
++#include "syscall/syscall.h"
++#include "syscall/sysnum.h"
++#include "tracee/reg.h"
++#include "tracee/mem.h"
++#include "cli/note.h"
++
++#ifdef ARCH_ARM64
++static bool recovery_enabled(const Tracee *tracee)
++{
++    const char *retry = getenv("PROOT_EXEC_LOADER_RETRY");
++    const char *verify = getenv("PROOT_VERIFY_REGSET");
++    return !tracee->is_aarch32 && tracee->qemu == NULL
++        && tracee->as_ptracee.ptracer == NULL
++        && retry != NULL && strcmp(retry, "1") == 0
++        && verify != NULL && strcmp(verify, "1") == 0;
++}
++
++static bool guest_overlaps_loader(const Tracee *tracee, const LoadInfo *load)
++{
++    size_t i;
++    if (load == NULL) return false;
++    if (load->mappings != NULL) {
++        for (i = 0; i < talloc_array_length(load->mappings); i++) {
++            word_t start = load->mappings[i].addr;
++            word_t size = load->mappings[i].length;
++            if (start > UINT64_MAX - size || (size != 0
++                && start < tracee->harmony_loader.text_end
++                && start + size > tracee->harmony_loader.text_start))
++                return true;
++        }
++    }
++    return guest_overlaps_loader(tracee, load->interp);
++}
++
++static int find_loader_text(const ElfHeader *header, const ProgramHeader *program, void *data)
++{
++    Tracee *tracee = data;
++    word_t start, size;
++    if (PROGRAM_FIELD(*header, *program, type) != PT_LOAD
++        || !(PROGRAM_FIELD(*header, *program, flags) & PF_X))
++        return 0;
++    start = PROGRAM_FIELD(*header, *program, vaddr);
++    size = PROGRAM_FIELD(*header, *program, memsz);
++    /* Reject ambiguous/discontiguous code ranges and overflow. */
++    if (tracee->harmony_loader.text_end != 0 || size == 0
++        || start > UINT64_MAX - size)
++        return -EINVAL;
++    tracee->harmony_loader.text_start = start;
++    tracee->harmony_loader.text_end = start + size;
++    return 0;
++}
++#endif
++
++void harmony_loader_prepare(Tracee *tracee, const char *loader_path)
++{
++#ifdef ARCH_ARM64
++    ElfHeader header;
++    int fd, status;
++    bool restarting = tracee->harmony_loader.restarting;
++    tracee->harmony_loader.restarting = false;
++    tracee->harmony_loader.active = false;
++    tracee->harmony_loader.initial_sp = 0;
++    tracee->harmony_loader.text_start = 0;
++    tracee->harmony_loader.text_end = 0;
++    if (!restarting) {
++        tracee->harmony_loader.retries = 0;
++        TALLOC_FREE(tracee->harmony_loader.raw_path);
++    }
++    if (!recovery_enabled(tracee) || tracee->load_info == NULL)
++        return;
++    /* Preserve shebang AT_EXECFN/comm semantics when retrying its interpreter. */
++    if (restarting && tracee->harmony_loader.raw_path != NULL) {
++        char *raw = talloc_strdup(tracee->load_info, tracee->harmony_loader.raw_path);
++        if (raw == NULL) return;
++        tracee->load_info->raw_path = raw;
++    } else {
++        tracee->harmony_loader.raw_path = talloc_strdup(tracee, tracee->load_info->raw_path);
++        if (tracee->harmony_loader.raw_path == NULL) return;
++    }
++    fd = open_elf(loader_path, &header);
++    if (fd < 0) return;
++    /* Fixed-address 64-bit ARM loader only; never guess an ASLR load bias. */
++    status = -EINVAL;
++    if (IS_CLASS64(header) && ELF_FIELD(header, type) == ET_EXEC
++        && ELF_FIELD(header, machine) == 183)
++        status = iterate_program_headers(tracee, fd, &header, find_loader_text, tracee);
++    close(fd);
++    if (status >= 0 && guest_overlaps_loader(tracee, tracee->load_info))
++        status = -EINVAL;
++    if (status < 0) {
++        tracee->harmony_loader.text_start = 0;
++        tracee->harmony_loader.text_end = 0;
++    }
++#else
++    (void) tracee; (void) loader_path;
++#endif
++}
++
++void harmony_loader_arm(Tracee *tracee, word_t initial_sp)
++{
++#ifdef ARCH_ARM64
++    tracee->harmony_loader.retry_exec_in_flight = false;
++    tracee->harmony_loader.initial_sp = initial_sp;
++    tracee->harmony_loader.active = recovery_enabled(tracee)
++        && tracee->harmony_loader.text_end != 0;
++#else
++    (void) tracee; (void) initial_sp;
++#endif
++}
++
++void harmony_loader_enter(Tracee *tracee)
++{
++#ifdef ARCH_ARM64
++    word_t pc, number, argc, terminator, sp;
++    struct user_regs_struct saved;
++    bool changed;
++    if (!tracee->harmony_loader.active || !recovery_enabled(tracee))
++        return;
++    pc = peek_reg(tracee, CURRENT, INSTR_POINTER);
++    if (pc < tracee->harmony_loader.text_start || pc >= tracee->harmony_loader.text_end) {
++        tracee->harmony_loader.active = false;
++        return;
++    }
++    number = get_sysnum(tracee, CURRENT);
++    /* This is the actual vendored loader's last syscall before BRANCH. */
++    if (number == PR_prctl && peek_reg(tracee, CURRENT, SYSARG_1) == PR_SET_NAME) {
++        tracee->harmony_loader.active = false;
++        return;
++    }
++    /* Failed attempts must not leak the loader's read-only ELF fd across exec. */
++    if (number == PR_openat) {
++        poke_reg(tracee, SYSARG_3, peek_reg(tracee, CURRENT, SYSARG_3) | O_CLOEXEC);
++        return;
++    }
++    if (number != PR_exit || peek_reg(tracee, CURRENT, SYSARG_1) != 182
++        || tracee->harmony_loader.retries >= 3 || tracee->load_info == NULL)
++        return;
++    sp = tracee->harmony_loader.initial_sp;
++    if (sp == 0 || read_data(tracee, &argc, sp, sizeof(argc)) < 0
++        || argc == 0 || argc > 4096 || sp > UINT64_MAX - (argc + 3) * sizeof(word_t)
++        || read_data(tracee, &terminator, sp + (argc + 1) * sizeof(word_t), sizeof(terminator)) < 0
++        || terminator != 0)
++        return;
++    saved = tracee->_regs[CURRENT];
++    changed = tracee->_regs_were_changed;
++    if (set_sysarg_path(tracee, tracee->load_info->user_path, SYSARG_1) < 0) {
++        tracee->_regs[CURRENT] = saved;
++        tracee->_regs_were_changed = changed;
++        return;
++    }
++    /* Kernel-built argv/envp are still intact above the loader's script/frame.
++     * Use the already-expanded interpreter path, so shebang argv isn't doubled. */
++    poke_reg(tracee, SYSARG_2, sp + sizeof(word_t));
++    poke_reg(tracee, SYSARG_3, sp + (argc + 2) * sizeof(word_t));
++    set_sysnum(tracee, PR_execve);
++    /* ORIGINAL will be snapshotted after this hook. Force the kernel's separate
++     * NT_ARM_SYSTEM_CALL update even though both snapshots now say execve. */
++    tracee->harmony_loader.force_sysnum = true;
++    tracee->harmony_loader.restarting = true;
++    tracee->harmony_loader.retry_exec_in_flight = true;
++    tracee->harmony_loader.active = false;
++    tracee->harmony_loader.retries++;
++    note(tracee, WARNING, INTERNAL, "[proot-exec-loader-retry] pre-entry retry %u/3",
++         tracee->harmony_loader.retries);
++#else
++    (void) tracee;
++#endif
++}
++
++void harmony_loader_fail_retry(Tracee *tracee)
++{
++#ifdef ARCH_ARM64
++    /* An injected exec that fails must never return into __builtin_unreachable
++     * after the old loader's EXIT instruction. Terminate this child instead. */
++    if (tracee->harmony_loader.retry_exec_in_flight) {
++        tracee->harmony_loader.retry_exec_in_flight = false;
++        tracee->harmony_loader.force_sysnum = false;
++        tracee->harmony_loader.active = false;
++        note(tracee, WARNING, INTERNAL, "[proot-exec-loader-retry] retry exec failed; child stopped");
++        kill(tracee->pid, SIGKILL);
++    }
++#else
++    (void) tracee;
++#endif
++}

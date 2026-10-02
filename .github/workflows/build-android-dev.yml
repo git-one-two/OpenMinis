@@ -61,6 +61,7 @@ jobs:
           ./deps/build_proot.sh
           ./scripts/prepare_android_sandbox.sh
           python3 scripts/test_harmony_regset.py
+          python3 scripts/test_harmony_loader_retry.py
 
       - name: Build rclone Android library
         shell: bash
