@@ -5,6 +5,7 @@ import android.util.Log
 import java.io.File
 import java.nio.charset.StandardCharsets
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.launch
 
@@ -58,6 +59,11 @@ internal class FreshProcessShell(
     var commandExitRecorded: Boolean = false
         private set
 
+    /** True once the inner command shell has crossed the user-code boundary. */
+    @Volatile
+    var userCommandStarted: Boolean = true
+        private set
+
     /** Host PRoot process exit status, when it actually exited. */
     @Volatile
     var lastProcessExitCode: Int? = null
@@ -70,6 +76,34 @@ internal class FreshProcessShell(
      *   contract and `timeout(1)`.
      */
     suspend fun execute(
+        command: String,
+        timeout: Long,
+        envVars: Map<String, String> = emptyMap(),
+        lineCallback: ((String) -> Unit)? = null,
+    ): Pair<String, Int> {
+        val startedAt = android.os.SystemClock.elapsedRealtime()
+        var retries = 0
+        while (true) {
+            kotlinx.coroutines.currentCoroutineContext().ensureActive()
+            if (stopped) return Pair("[Cancelled]", CANCELLED_EXIT)
+            val remaining = timeout - (android.os.SystemClock.elapsedRealtime() - startedAt)
+            if (remaining <= 0) return Pair("[Command timed out during sandbox startup]", 124)
+            val result = executeOnce(command, remaining, envVars, lineCallback)
+            if (!LoaderStartupRetryPolicy.shouldRetry(
+                    result.second, lastProcessExitCode, userCommandStarted, retries, stopped,
+                )
+            ) return result
+            com.openminis.app.logging.AppLogger.warning(
+                TAG,
+                "[proot-loader-retry] pre-command loader failure; retry=${retries + 1}/3 " +
+                    "processExit=$lastProcessExitCode commandExit=${result.second}",
+            )
+            kotlinx.coroutines.delay(LoaderStartupRetryPolicy.delayMs(retries))
+            retries++
+        }
+    }
+
+    private suspend fun executeOnce(
         command: String,
         timeout: Long,
         envVars: Map<String, String> = emptyMap(),
@@ -237,8 +271,12 @@ internal class FreshProcessShell(
             output.append(err)
         }
 
+        // Inspect before deleting; errors are treated as "may have started".
+        val startedFile = File(statusFile.path + ".started")
+        userCommandStarted = runCatching { startedFile.exists() }.getOrDefault(true)
         live = null
         statusHandle = null
+        runCatching { startedFile.delete() }
         runCatching { statusFile.delete() }
         runCatching { File(statusFile.path + ".pid").delete() }
 
@@ -311,6 +349,7 @@ internal class FreshProcessShell(
         if (PRootKernel.nativeLibDir.isNotEmpty()) env["LD_LIBRARY_PATH"] = PRootKernel.nativeLibDir
         if (PRootKernel.prootLoaderPath.isNotEmpty()) env["PROOT_LOADER"] = PRootKernel.prootLoaderPath
         if (PRootKernel.prootLoader32Path.isNotEmpty()) env["PROOT_LOADER_32"] = PRootKernel.prootLoader32Path
+        if (com.openminis.app.BuildConfig.DEV_TOOLS) env["PROOT_VERIFY_REGSET"] = "1"
         env["TERM"] = "dumb"
         env["PS1"] = ""
         env["TZ"] = PRootKernel.posixTz()

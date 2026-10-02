@@ -76,6 +76,7 @@ object ExecutionCoordinator {
             val output: String,
             val exitCode: Int,
             val commandExitRecorded: Boolean,
+            val userCommandStarted: Boolean,
             val processExitCode: Int?,
         )
 
@@ -109,6 +110,7 @@ object ExecutionCoordinator {
                     output = output,
                     exitCode = exitCode,
                     commandExitRecorded = shell.commandExitRecorded,
+                    userCommandStarted = shell.userCommandStarted,
                     processExitCode = shell.lastProcessExitCode,
                 )
             } finally {
@@ -144,13 +146,13 @@ object ExecutionCoordinator {
             callback = lineCallback,
         )
 
-        // Preserve upstream's deliberately narrow automatic retry: an early,
-        // no-output fatal signal is safe to rerun because the guest command
-        // never got far enough to have observable side effects.
+        // Timing/no output alone cannot prove safety: even a silent command
+        // can already have mutated data. Require the inner startup marker too.
         val firstDurationMs = System.currentTimeMillis() - startTime
         val firstFatalExit =
             AgentSandboxCompatibility.normalizeSignalExit(current.processExitCode) ?: current.exitCode
         if (!forceNoSeccomp &&
+            !current.userCommandStarted &&
             isSandboxFatal(current) &&
             SeccompFallbackPolicy.shouldRetryWithoutSeccomp(
                 exitCode = firstFatalExit,

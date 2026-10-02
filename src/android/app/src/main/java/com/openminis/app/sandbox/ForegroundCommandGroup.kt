@@ -140,7 +140,7 @@ internal object ForegroundCommandGroup {
      * the runner — so nothing in either is ever re-parsed by a shell.
      */
     fun wrapForFreshProcess(command: String, statusPath: String): List<String> =
-        listOf(SETSID, "/bin/sh", "-c", FRESH_RUNNER, "sh", command, statusPath)
+        listOf(SETSID, "/bin/sh", "-c", FRESH_RUNNER, "sh", markCommandStart(command, statusPath), statusPath)
 
     /**
      * [T-android-fresh-exit-status-file] See [wrapForFreshProcess]. `$1` is the
@@ -150,6 +150,16 @@ internal object ForegroundCommandGroup {
      */
     const val FRESH_RUNNER =
         "printf '%s' \"\$\$\" > \"\$2.pid\"; /bin/sh -c \"\$1\"; rc=\$?; printf '%s' \"\$rc\" > \"\$2\"; exit \$rc"
+
+    /**
+     * The INNER command shell must load and write this marker before evaluating
+     * any user code. An outer runner/status alone cannot prove that a failing
+     * nested loader ran nothing. Fail closed if the marker cannot be written.
+     */
+    internal fun markCommandStart(command: String, statusPath: String): String {
+        val path = (statusPath + ".started").replace("'", "'\\''")
+        return "printf '%s' started > '$path' || exit 125\n$command"
+    }
 
     /** Marker the wrapper prints so the host can learn the group id. */
     fun pgidMarkerPrefix(marker: String): String = "__MINIS_PGID_${marker}_"

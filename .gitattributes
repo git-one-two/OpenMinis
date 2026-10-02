@@ -1,3 +1,6 @@
 # Keep scripts and guest-side sandbox assets Unix-native on Windows checkouts.
 *.sh text eol=lf
 src/android/app/src/main/assets/default_mount/** text eol=lf
+
+# Diff context in patch files intentionally contains a leading space.
+deps/patches/*.patch text eol=lf whitespace=-blank-at-eol,-space-before-tab

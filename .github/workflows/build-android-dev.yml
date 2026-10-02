@@ -60,6 +60,7 @@ jobs:
           chmod +x deps/build_proot.sh scripts/prepare_android_sandbox.sh
           ./deps/build_proot.sh
           ./scripts/prepare_android_sandbox.sh
+          python3 scripts/test_harmony_regset.py
 
       - name: Build rclone Android library
         shell: bash
@@ -74,7 +75,7 @@ jobs:
         working-directory: src/android
         run: |
           chmod +x gradlew
-          ./gradlew --no-daemon :app:testDebugUnitTest --tests "com.openminis.app.sandbox.AgentSandboxCompatibilityTest"
+          ./gradlew --no-daemon :app:testDebugUnitTest --tests "com.openminis.app.sandbox.*"
 
       - name: Build 1.14 dev APK
         shell: bash
