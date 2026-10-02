@@ -1,5 +1,5 @@
 # Harmony hf5：恢复流程修正与真机诊断
-日期：2026-10-02。状态：候选已发布，华为真机验收尚未完成。
+日期：2026-10-02。状态：真机验收失败。
 
 ## hf4 验收事实
 原始数据在 docs/research/hf4-device/，commit 2853190cc91f。
@@ -52,4 +52,9 @@ Android CI 36989848005 构建和 sandbox 单元测试成功，APK 源码为上�
 原生 CI 36989650866：240 子进程通过，420 次恢复尝试均写入诊断文件，无意外恢复失败。
 发行版附 hf5-verification.json 和 harmony-native-results.json。
 设备脚本现检查 libproot.so 哈希；无法读取 APK 时此项也不通过，需确认版本后补证据。
-候选已发布，Huawei 真机验收待回传；不得用 CI 通过代替设备通过。
+Huawei 真机验收已失败；不得用 CI 通过代替设备通过。
+
+## HF5 真机验收更新
+commit a82d3c425c09：true 376/400、shebang 0/40、用户182为37/40且仅37次写入，HF5未修复。
+恢复27/27失败；不要把neutral sysnum=61误认为Linux getdents64，源码复核更正已附hf5-analysis.md头部。
+HF5发行版已标记device verification failed。后续以HARMONY_HF6_LEGACY_BASELINE_2026-10-02.md为准。
