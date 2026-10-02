@@ -1,7 +1,53 @@
 diff --git a/src/execve/loader_retry.c b/src/execve/loader_retry.c
 --- a/src/execve/loader_retry.c
 +++ b/src/execve/loader_retry.c
-@@ -170,6 +170,10 @@
+@@ -3,6 +3,9 @@
+  * The parent shell/Python process and its completed side effects stay intact.
+  */
+ #include <errno.h>
++#include <stdio.h>
++#include <sys/stat.h>
++#include <time.h>
+ #include <fcntl.h>
+ #include <signal.h>
+ #include <stdint.h>
+@@ -18,6 +21,35 @@
+ #include "tracee/mem.h"
+ #include "cli/note.h"
+ 
++void harmony_exec_diagnostic(Tracee *tracee, const char *stage, long code)
++{
++#ifdef ARCH_ARM64
++    const char *path = getenv("PROOT_EXEC_DIAG_FILE");
++    int saved_errno = errno, fd, length;
++    struct stat st;
++    char line[256];
++    if (path == NULL || path[0] == '\0') return;
++    fd = open(path, O_WRONLY | O_CREAT | O_APPEND | O_CLOEXEC | O_NOFOLLOW, 0600);
++    if (fd >= 0) {
++        if (fstat(fd, &st) == 0 && S_ISREG(st.st_mode) && st.st_size < 131072) {
++            length = snprintf(line, sizeof(line),
++                "time=%ld pid=%ld stage=%s code=%ld status=%d sysnum=%lu pc=%lx sp=%lx retries=%u\n",
++                (long)time(NULL), (long)tracee->pid, stage, code, tracee->status,
++                (unsigned long)get_sysnum(tracee, CURRENT),
++                (unsigned long)peek_reg(tracee, CURRENT, INSTR_POINTER),
++                (unsigned long)peek_reg(tracee, CURRENT, STACK_POINTER),
++                tracee->harmony_loader.retries);
++            if (length > 0 && (size_t)length < sizeof(line))
++                (void)write(fd, line, (size_t)length);
++        }
++        close(fd);
++    }
++    errno = saved_errno;
++#else
++    (void)tracee; (void)stage; (void)code;
++#endif
++}
++
+ #ifdef ARCH_ARM64
+ static bool recovery_enabled(const Tracee *tracee)
+ {
+@@ -170,10 +202,15 @@
      /* ORIGINAL will be snapshotted after this hook. Force the kernel's separate
       * NT_ARM_SYSTEM_CALL update even though both snapshots now say execve. */
      tracee->harmony_loader.force_sysnum = true;
@@ -12,7 +58,12 @@ diff --git a/src/execve/loader_retry.c b/src/execve/loader_retry.c
      tracee->harmony_loader.restarting = true;
      tracee->harmony_loader.retry_exec_in_flight = true;
      tracee->harmony_loader.active = false;
-@@ -190,7 +194,10 @@
+     tracee->harmony_loader.retries++;
++    harmony_exec_diagnostic(tracee, "retry-start", tracee->harmony_loader.retries);
+     note(tracee, WARNING, INTERNAL, "[proot-exec-loader-retry] pre-entry retry %u/3",
+          tracee->harmony_loader.retries);
+ #else
+@@ -190,7 +227,11 @@
          tracee->harmony_loader.retry_exec_in_flight = false;
          tracee->harmony_loader.force_sysnum = false;
          tracee->harmony_loader.active = false;
@@ -21,16 +72,79 @@ diff --git a/src/execve/loader_retry.c b/src/execve/loader_retry.c
 +             (long) peek_reg(tracee, CURRENT, SYSARG_RESULT), tracee->status,
 +             (unsigned long) get_sysnum(tracee, ORIGINAL),
 +             (unsigned long) peek_reg(tracee, CURRENT, INSTR_POINTER));
++        harmony_exec_diagnostic(tracee, "retry-failed", (long)peek_reg(tracee, CURRENT, SYSARG_RESULT));
          kill(tracee->pid, SIGKILL);
      }
  #else
+diff --git a/src/execve/execve.h b/src/execve/execve.h
+--- a/src/execve/execve.h
++++ b/src/execve/execve.h
+@@ -65,4 +65,6 @@
+ 		&& peek_reg((tracee), ORIGINAL, SYSARG_5) == (word_t) 3	\
+ 		&& peek_reg((tracee), ORIGINAL, SYSARG_6) == (word_t) 4)
+ 
++void harmony_exec_diagnostic(Tracee *tracee, const char *stage, long code);
++
+ #endif /* EXECVE_H */
+diff --git a/src/execve/enter.c b/src/execve/enter.c
+--- a/src/execve/enter.c
++++ b/src/execve/enter.c
+@@ -623,6 +623,7 @@
+ 		return -ENOMEM;
+ 
+ 	status = expand_shebang(tracee, host_path, user_path);
++    if (status < 0) harmony_exec_diagnostic(tracee, "shebang-expand", status);
+ 	if (status < 0)
+ 		/* The Linux kernel actually returns -EACCES when
+ 		 * trying to execute a directory.  */
+diff --git a/src/execve/exit.c b/src/execve/exit.c
+--- a/src/execve/exit.c
++++ b/src/execve/exit.c
+@@ -469,8 +469,10 @@
+ #endif
+ 
+ 	syscall_result = peek_reg(tracee, CURRENT, SYSARG_RESULT);
+-	if ((int) syscall_result < 0)
++	if ((int) syscall_result < 0) {
++        harmony_exec_diagnostic(tracee, "kernel-exec", (long)syscall_result);
+ 		return;
++    }
+ 
+ 	/* Execve happened; commit the new "/proc/self/exe".  */
+ 	if (tracee->new_exe != NULL) {
 diff --git a/src/syscall/syscall.c b/src/syscall/syscall.c
 --- a/src/syscall/syscall.c
 +++ b/src/syscall/syscall.c
-@@ -235,6 +235,8 @@
+@@ -112,10 +112,6 @@
+ 	if (status < 0)
+ 		return;
+ 
+-	/* Recover an individual pre-entry loader, before ORIGINAL is captured. */
+-	if (is_enter_stage && tracee->chain.syscalls == NULL)
+-		harmony_loader_enter(tracee);
+-
+ 	int suppressed_syscall_status = 0;
+ 
+ 	if (is_enter_stage) {
+@@ -141,7 +137,13 @@
+ 		 * requested by the tracee, it is not a syscall
+ 		 * chained by PRoot.  */
+ 		if (tracee->chain.syscalls == NULL) {
++            /* ORIGINAL must contain the synthetic exec for translation.
++             * save_current_regs clears dirty state, so preserve hook writes. */
++            tracee->_regs_were_changed = false;
++            harmony_loader_enter(tracee);
++            bool loader_changed_regs = tracee->_regs_were_changed;
+ 			save_current_regs(tracee, ORIGINAL);
++            tracee->_regs_were_changed = loader_changed_regs;
+ 			status = translate_syscall_enter(tracee);
+ 			save_current_regs(tracee, MODIFIED);
+ 		}
+@@ -235,6 +237,9 @@
  	int push_regs_status = push_specific_regs(tracee, override_sysnum);
      tracee->harmony_loader.force_sysnum = false;
      if (forced_loader_exec && push_regs_status < 0) {
++        harmony_exec_diagnostic(tracee, "retry-register", errno);
 +        note(tracee, WARNING, INTERNAL,
 +             "[proot-exec-loader-retry] register update failed: errno=%d", errno);
          harmony_loader_fail_retry(tracee);

@@ -352,6 +352,10 @@ internal class FreshProcessShell(
         if (com.openminis.app.BuildConfig.DEV_TOOLS) {
             env["PROOT_VERIFY_REGSET"] = "1"
             env["PROOT_EXEC_LOADER_RETRY"] = "1"
+            val diagnostic = java.io.File(context.filesDir,
+                "minis-global/shared/work/OpenMinis-investigation/HF5_exec_diag.log")
+            diagnostic.parentFile?.mkdirs()
+            env["PROOT_EXEC_DIAG_FILE"] = diagnostic.absolutePath
         }
         env["TERM"] = "dumb"
         env["PS1"] = ""

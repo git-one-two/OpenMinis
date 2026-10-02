@@ -13,6 +13,10 @@
 #include <sys/prctl.h>
 #include <errno.h>
 #include <sys/ptrace.h>
+#include <sys/stat.h>
+#include <time.h>
+#include <sys/stat.h>
+#include <time.h>
 typedef uint64_t word_t;
 enum { CURRENT, ORIGINAL, MODIFIED };
 enum { SYSARG_1, SYSARG_2, SYSARG_3, SYSARG_4, SYSARG_5, SYSARG_6,

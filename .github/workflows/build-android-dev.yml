@@ -9,6 +9,7 @@ on:
       - ".github/workflows/build-android-dev.yml"
       - "deps/**"
       - "scripts/**"
+      - "!scripts/test_harmony_native.py"
       - "src/android/**"
       - ".gitattributes"
   workflow_dispatch:
